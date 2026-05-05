@@ -20,6 +20,18 @@ from novel_generator import (
 )
 from consistency_checker import check_consistency
 
+
+def _resolve_llm_config(self, config_name: str) -> dict:
+    cfg = dict(self.loaded_config.get("llm_configs", {}).get(config_name, {}))
+    if not cfg.get("api_key"):
+        ui_name = self.interface_config_var.get()
+        if ui_name == config_name:
+            cfg["api_key"] = self.api_key_var.get().strip()
+            cfg["base_url"] = self.base_url_var.get().strip() or cfg.get("base_url", "")
+            cfg["model_name"] = self.model_name_var.get().strip() or cfg.get("model_name", "")
+            cfg["interface_format"] = self.interface_format_var.get().strip() or cfg.get("interface_format", "OpenAI")
+    return cfg
+
 def generate_novel_architecture_ui(self):
     filepath = self.filepath_var.get().strip()
     if not filepath:
@@ -35,14 +47,18 @@ def generate_novel_architecture_ui(self):
         self.disable_button_safe(self.btn_generate_architecture)
         try:
 
+            cfg = _resolve_llm_config(self, self.architecture_llm_var.get())
+            interface_format = cfg["interface_format"]
+            api_key = cfg["api_key"]
+            base_url = cfg["base_url"]
+            model_name = cfg["model_name"]
+            temperature = cfg["temperature"]
+            max_tokens = cfg["max_tokens"]
+            timeout_val = cfg["timeout"]
 
-            interface_format = self.loaded_config["llm_configs"][self.architecture_llm_var.get()]["interface_format"]
-            api_key = self.loaded_config["llm_configs"][self.architecture_llm_var.get()]["api_key"]
-            base_url = self.loaded_config["llm_configs"][self.architecture_llm_var.get()]["base_url"]
-            model_name = self.loaded_config["llm_configs"][self.architecture_llm_var.get()]["model_name"]
-            temperature = self.loaded_config["llm_configs"][self.architecture_llm_var.get()]["temperature"]
-            max_tokens = self.loaded_config["llm_configs"][self.architecture_llm_var.get()]["max_tokens"]
-            timeout_val = self.loaded_config["llm_configs"][self.architecture_llm_var.get()]["timeout"]
+            if not api_key:
+                messagebox.showerror("错误", f"请先配置 '{self.architecture_llm_var.get()}' 的 API Key！\n在右侧'配置管理'中选择模型、填入Key并点击'保存'。")
+                return
 
 
 
@@ -91,13 +107,18 @@ def generate_chapter_blueprint_ui(self):
 
             number_of_chapters = self.safe_get_int(self.num_chapters_var, 10)
 
-            interface_format = self.loaded_config["llm_configs"][self.chapter_outline_llm_var.get()]["interface_format"]
-            api_key = self.loaded_config["llm_configs"][self.chapter_outline_llm_var.get()]["api_key"]
-            base_url = self.loaded_config["llm_configs"][self.chapter_outline_llm_var.get()]["base_url"]
-            model_name = self.loaded_config["llm_configs"][self.chapter_outline_llm_var.get()]["model_name"]
-            temperature = self.loaded_config["llm_configs"][self.chapter_outline_llm_var.get()]["temperature"]
-            max_tokens = self.loaded_config["llm_configs"][self.chapter_outline_llm_var.get()]["max_tokens"]
-            timeout_val = self.loaded_config["llm_configs"][self.chapter_outline_llm_var.get()]["timeout"]
+            cfg = _resolve_llm_config(self, self.chapter_outline_llm_var.get())
+            interface_format = cfg["interface_format"]
+            api_key = cfg["api_key"]
+            base_url = cfg["base_url"]
+            model_name = cfg["model_name"]
+            temperature = cfg["temperature"]
+            max_tokens = cfg["max_tokens"]
+            timeout_val = cfg["timeout"]
+
+            if not api_key:
+                messagebox.showerror("错误", f"请先配置 '{self.chapter_outline_llm_var.get()}' 的 API Key！")
+                return
 
 
             user_guidance = self.user_guide_text.get("0.0", "end").strip()  # 新增获取用户指导
@@ -132,13 +153,18 @@ def generate_chapter_draft_ui(self):
         self.disable_button_safe(self.btn_generate_chapter)
         try:
 
-            interface_format = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["interface_format"]
-            api_key = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["api_key"]
-            base_url = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["base_url"]
-            model_name = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["model_name"]
-            temperature = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["temperature"]
-            max_tokens = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["max_tokens"]
-            timeout_val = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["timeout"]
+            cfg = _resolve_llm_config(self, self.prompt_draft_llm_var.get())
+            interface_format = cfg["interface_format"]
+            api_key = cfg["api_key"]
+            base_url = cfg["base_url"]
+            model_name = cfg["model_name"]
+            temperature = cfg["temperature"]
+            max_tokens = cfg["max_tokens"]
+            timeout_val = cfg["timeout"]
+
+            if not api_key:
+                messagebox.showerror("错误", f"请先配置 '{self.prompt_draft_llm_var.get()}' 的 API Key！")
+                return
 
 
             chap_num = self.safe_get_int(self.chapter_num_var, 1)
@@ -331,13 +357,18 @@ def finalize_chapter_ui(self):
         self.disable_button_safe(self.btn_finalize_chapter)
         try:
 
-            interface_format = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["interface_format"]
-            api_key = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["api_key"]
-            base_url = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["base_url"]
-            model_name = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["model_name"]
-            temperature = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["temperature"]
-            max_tokens = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["max_tokens"]
-            timeout_val = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["timeout"]
+            cfg = _resolve_llm_config(self, self.final_chapter_llm_var.get())
+            interface_format = cfg["interface_format"]
+            api_key = cfg["api_key"]
+            base_url = cfg["base_url"]
+            model_name = cfg["model_name"]
+            temperature = cfg["temperature"]
+            max_tokens = cfg["max_tokens"]
+            timeout_val = cfg["timeout"]
+
+            if not api_key:
+                messagebox.showerror("错误", f"请先配置 '{self.final_chapter_llm_var.get()}' 的 API Key！")
+                return
 
 
             embedding_api_key = self.embedding_api_key_var.get().strip()
@@ -412,13 +443,18 @@ def do_consistency_check(self):
     def task():
         self.disable_button_safe(self.btn_check_consistency)
         try:
-            interface_format = self.loaded_config["llm_configs"][self.consistency_review_llm_var.get()]["interface_format"]
-            api_key = self.loaded_config["llm_configs"][self.consistency_review_llm_var.get()]["api_key"]
-            base_url = self.loaded_config["llm_configs"][self.consistency_review_llm_var.get()]["base_url"]
-            model_name = self.loaded_config["llm_configs"][self.consistency_review_llm_var.get()]["model_name"]
-            temperature = self.loaded_config["llm_configs"][self.consistency_review_llm_var.get()]["temperature"]
-            max_tokens = self.loaded_config["llm_configs"][self.consistency_review_llm_var.get()]["max_tokens"]
-            timeout = self.loaded_config["llm_configs"][self.consistency_review_llm_var.get()]["timeout"]
+            cfg = _resolve_llm_config(self, self.consistency_review_llm_var.get())
+            interface_format = cfg["interface_format"]
+            api_key = cfg["api_key"]
+            base_url = cfg["base_url"]
+            model_name = cfg["model_name"]
+            temperature = cfg["temperature"]
+            max_tokens = cfg["max_tokens"]
+            timeout = cfg["timeout"]
+
+            if not api_key:
+                messagebox.showerror("错误", f"请先配置 '{self.consistency_review_llm_var.get()}' 的 API Key！")
+                return
 
 
             chap_num = self.safe_get_int(self.chapter_num_var, 1)
@@ -430,8 +466,10 @@ def do_consistency_check(self):
                 return
 
             self.safe_log("开始一致性审校...")
+            novel_setting = read_file(os.path.join(filepath, "Novel_architecture.txt"))
+            plot_arcs = read_file(os.path.join(filepath, "plot_arcs.txt"))
             result = check_consistency(
-                novel_setting="",
+                novel_setting=novel_setting,
                 character_state=read_file(os.path.join(filepath, "character_state.txt")),
                 global_summary=read_file(os.path.join(filepath, "global_summary.txt")),
                 chapter_text=chapter_text,
@@ -442,7 +480,7 @@ def do_consistency_check(self):
                 interface_format=interface_format,
                 max_tokens=max_tokens,
                 timeout=timeout,
-                plot_arcs=""
+                plot_arcs=plot_arcs
             )
             self.safe_log("审校结果：")
             self.safe_log(result)
@@ -541,13 +579,14 @@ def generate_batch_ui(self):
         return result
     
     def generate_chapter_batch(self ,i ,word, min, auto_enrich):
-        draft_interface_format = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["interface_format"]
-        draft_api_key = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["api_key"]
-        draft_base_url = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["base_url"]
-        draft_model_name = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["model_name"]
-        draft_temperature = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["temperature"]
-        draft_max_tokens = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["max_tokens"]
-        draft_timeout = self.loaded_config["llm_configs"][self.prompt_draft_llm_var.get()]["timeout"]
+        draft_cfg = _resolve_llm_config(self, self.prompt_draft_llm_var.get())
+        draft_interface_format = draft_cfg["interface_format"]
+        draft_api_key = draft_cfg["api_key"]
+        draft_base_url = draft_cfg["base_url"]
+        draft_model_name = draft_cfg["model_name"]
+        draft_temperature = draft_cfg["temperature"]
+        draft_max_tokens = draft_cfg["max_tokens"]
+        draft_timeout = draft_cfg["timeout"]
         user_guidance = self.user_guide_text.get("0.0", "end").strip()  
 
         char_inv = self.characters_involved_var.get().strip()
@@ -645,13 +684,14 @@ def generate_batch_ui(self):
             custom_prompt_text=final_prompt  
         )
 
-        finalize_interface_format = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["interface_format"]
-        finalize_api_key = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["api_key"]
-        finalize_base_url = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["base_url"]
-        finalize_model_name = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["model_name"]
-        finalize_temperature = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["temperature"]
-        finalize_max_tokens = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["max_tokens"]
-        finalize_timeout = self.loaded_config["llm_configs"][self.final_chapter_llm_var.get()]["timeout"]
+        finalize_cfg = _resolve_llm_config(self, self.final_chapter_llm_var.get())
+        finalize_interface_format = finalize_cfg["interface_format"]
+        finalize_api_key = finalize_cfg["api_key"]
+        finalize_base_url = finalize_cfg["base_url"]
+        finalize_model_name = finalize_cfg["model_name"]
+        finalize_temperature = finalize_cfg["temperature"]
+        finalize_max_tokens = finalize_cfg["max_tokens"]
+        finalize_timeout = finalize_cfg["timeout"]
 
         chapters_dir = os.path.join(self.filepath_var.get().strip(), "chapters")
         os.makedirs(chapters_dir, exist_ok=True)

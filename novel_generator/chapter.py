@@ -6,7 +6,7 @@
 import os
 import json
 import logging
-import re  # 添加re模块导入
+import re
 from llm_adapters import create_llm_adapter
 import prompt_definitions
 from chapter_directory_parser import get_chapter_info_from_blueprint
@@ -14,8 +14,54 @@ from novel_generator.common import invoke_with_cleaning
 from utils import read_file, clear_file_content, save_string_to_txt
 from novel_generator.vectorstore_utils import (
     get_relevant_context_from_vector_store,
-    load_vector_store  # 添加导入
+    load_vector_store
 )
+
+
+def estimate_tokens(text: str) -> int:
+    if not text:
+        return 0
+    chinese_chars = sum(1 for c in text if '\u4e00' <= c <= '\u9fff')
+    other_chars = len(text) - chinese_chars
+    return int(chinese_chars / 1.5 + other_chars / 4)
+
+
+def truncate_by_tokens(text: str, max_tokens: int) -> str:
+    if not text or estimate_tokens(text) <= max_tokens:
+        return text
+    ratio = max_tokens / max(1, estimate_tokens(text))
+    head_ratio = 0.75
+    head_chars = int(len(text) * ratio * head_ratio)
+    tail_chars = int(len(text) * ratio * (1 - head_ratio))
+    if head_chars + tail_chars >= len(text):
+        return text
+    return text[:head_chars] + "\n...(此处省略中间部分)...\n" + text[-tail_chars:]
+
+
+def manage_prompt_budget(content_blocks: dict, max_input_tokens: int = 14000) -> dict:
+    """
+    content_blocks: {name: (text, priority)}
+    priority: 数字越小越先被截断（1=最低优先级）
+    返回截断后的 {name: text}
+    """
+    result = {name: text for name, (text, _) in content_blocks.items()}
+    total = sum(estimate_tokens(t) for t in result.values())
+    if total <= max_input_tokens:
+        return result
+
+    sorted_blocks = sorted(content_blocks.items(), key=lambda x: x[1][1])
+    for name, (text, _) in sorted_blocks:
+        if total <= max_input_tokens:
+            break
+        current_tokens = estimate_tokens(text)
+        if current_tokens <= 200:
+            continue
+        excess = total - max_input_tokens
+        target = max(200, current_tokens - excess)
+        result[name] = truncate_by_tokens(text, target)
+        total = sum(estimate_tokens(t) for t in result.values())
+
+    return result
 logging.basicConfig(
     filename='app.log',      # 日志文件名
     filemode='a',            # 追加模式（'w' 会覆盖）
@@ -276,7 +322,11 @@ def get_filtered_knowledge_context(
         )
         
         filtered_content = invoke_with_cleaning(llm_adapter, prompt)
-        return filtered_content if filtered_content else "（知识内容过滤失败）"
+        if not filtered_content:
+            return "（知识内容过滤失败）"
+        if len(filtered_content) > 3000:
+            filtered_content = filtered_content[:2500] + "\n...(已截断)"
+        return filtered_content
         
     except Exception as e:
         logging.error(f"Error in knowledge filtering: {str(e)}")
@@ -346,8 +396,11 @@ def build_chapter_prompt(
     chapters_dir = os.path.join(filepath, "chapters")
     os.makedirs(chapters_dir, exist_ok=True)
 
-    # 第一章特殊处理
     if novel_number == 1:
+        budget = manage_prompt_budget({
+            "novel_setting": (novel_architecture_text, 2),
+            "user_guidance": (user_guidance or "无特殊指导", 5),
+        })
         return prompt_definitions.first_chapter_draft_prompt.format(
             novel_number=novel_number,
             word_number=word_number,
@@ -362,8 +415,8 @@ def build_chapter_prompt(
             key_items=key_items,
             scene_location=scene_location,
             time_constraint=time_constraint,
-            user_guidance=user_guidance,
-            novel_setting=novel_architecture_text
+            user_guidance=budget["user_guidance"],
+            novel_setting=budget["novel_setting"]
         )
 
     # 获取前文内容和摘要
@@ -492,13 +545,28 @@ def build_chapter_prompt(
         logging.error(f"知识处理流程异常：{str(e)}")
         filtered_context = "（知识库处理失败）"
 
-    # 返回最终提示词
+    budget = manage_prompt_budget({
+        "filtered_context": (filtered_context, 1),
+        "character_state": (character_state_text, 2),
+        "global_summary": (global_summary_text, 3),
+        "short_summary": (short_summary, 4),
+        "previous_chapter_excerpt": (previous_excerpt, 4),
+        "user_guidance": (user_guidance or "无特殊指导", 6),
+    })
+    final_tokens = estimate_tokens(
+        prompt_definitions.next_chapter_draft_prompt
+        + str(budget.get("filtered_context", ""))
+        + str(budget.get("character_state", ""))
+        + str(budget.get("global_summary", ""))
+    )
+    logging.info(f"[Prompt Budget] Ch{novel_number} estimated input tokens: {final_tokens}")
+
     return prompt_definitions.next_chapter_draft_prompt.format(
-        user_guidance=user_guidance if user_guidance else "无特殊指导",
-        global_summary=global_summary_text,
-        previous_chapter_excerpt=previous_excerpt,
-        character_state=character_state_text,
-        short_summary=short_summary,
+        user_guidance=budget["user_guidance"],
+        global_summary=budget["global_summary"],
+        previous_chapter_excerpt=budget["previous_chapter_excerpt"],
+        character_state=budget["character_state"],
+        short_summary=budget["short_summary"],
         novel_number=novel_number,
         chapter_title=chapter_title,
         chapter_role=chapter_role,
@@ -520,7 +588,7 @@ def build_chapter_prompt(
         next_chapter_foreshadowing=next_chapter_foreshadow,
         next_chapter_plot_twist_level=next_chapter_twist,
         next_chapter_summary=next_chapter_summary,
-        filtered_context=filtered_context
+        filtered_context=budget["filtered_context"]
     )
 
 def generate_chapter_draft(
