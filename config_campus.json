@@ -1,0 +1,79 @@
+{
+    "last_interface_format": "OpenAI",
+    "last_embedding_interface_format": "OpenAI",
+    "llm_configs": {
+        "DeepSeek V3": {
+            "api_key": "",
+            "base_url": "https://api.deepseek.com/v1",
+            "model_name": "deepseek-chat",
+            "temperature": 0.7,
+            "max_tokens": 8192,
+            "timeout": 600,
+            "interface_format": "OpenAI"
+        },
+        "GPT 5": {
+            "api_key": "",
+            "base_url": "https://api.openai.com/v1",
+            "model_name": "gpt-5",
+            "temperature": 0.7,
+            "max_tokens": 32768,
+            "timeout": 600,
+            "interface_format": "OpenAI"
+        },
+        "Gemini 2.5 Flash": {
+            "api_key": "",
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+            "model_name": "gemini-2.5-flash",
+            "temperature": 0.7,
+            "max_tokens": 32768,
+            "timeout": 600,
+            "interface_format": "Gemini"
+        }
+    },
+    "embedding_configs": {
+        "OpenAI": {
+            "api_key": "",
+            "base_url": "https://api.openai.com/v1",
+            "model_name": "text-embedding-ada-002",
+            "retrieval_k": 4,
+            "interface_format": "OpenAI"
+        },
+        "Gemini": {
+            "api_key": "",
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+            "model_name": "gemini-embedding-2",
+            "retrieval_k": 4,
+            "interface_format": "Gemini"
+        }
+    },
+    "other_params": {
+        "topic": "2008年的秋天，一个来自北方小城的男生考入南方某大学，在图书馆邂逅了改变他整个大学时光的女孩。四年的时光里，他们从陌生到相知，从相爱到错过——不是谁的错，只是青春本身就充满了来不及和留不住",
+        "genre": "校园青春文学·爱情与遗憾",
+        "num_chapters": 36,
+        "word_number": 3000,
+        "filepath": "",
+        "chapter_num": "1",
+        "user_guidance": "这是一部融合多部经典作品风格的长篇校园青春小说。核心参考：村上春树《挪威的森林》式的克制深情与感官精确、太宰治《人间失格》式的自我解剖与温柔绝望、八月长安《最好的我们》式的'小事大写'与口语化幽默。辅助参考：路遥《平凡的世界》式的质朴社会观察、九夜茴《匆匆那年》式的年代记忆、一草《那时年少》式的校园成长、霍达《穆斯林的葬礼》式的悲美意象。叙事采用第一人称回顾视角，以多年后的目光回望大学岁月。语言风格：克制的深情——用平静的语调写汹涌的情感，用朴素的句子承载沉重的命运。主题关键词：大学、图书馆、暗恋、错过、毕业、遗憾、时间。请注重日常细节的描写，用环境折射内心，用行动表达感情。在叙事中自然融入以下元素：阶级差异（来自不同家庭背景的学生）、音乐（随身听、校园广播、吉他社）、书信与纸条、季节更替作为情感计时器。整体不追求强情节，追求情感的累积与释放——像真正的青春一样，缓慢而不可逆转。",
+        "characters_involved": "林晚, 苏雨, 陈北, 沈若溪",
+        "key_items": "旧书店买的《挪威的森林》, 银色老式手表, 吉他社的宣传单, 图书馆四楼靠窗第四排座位",
+        "scene_location": "南方某大学校园: 图书馆、操场、梧桐大道、老教学楼天台、学校后门小吃街、男生宿舍420室",
+        "time_constraint": "2008年-2012年，大学四年，从大一入学报到到大四毕业典礼"
+    },
+    "choose_configs": {
+        "prompt_draft_llm": "DeepSeek V3",
+        "chapter_outline_llm": "DeepSeek V3",
+        "architecture_llm": "Gemini 2.5 Flash",
+        "final_chapter_llm": "GPT 5",
+        "consistency_review_llm": "DeepSeek V3"
+    },
+    "proxy_setting": {
+        "proxy_url": "127.0.0.1",
+        "proxy_port": "",
+        "enabled": false
+    },
+    "webdav_config": {
+        "webdav_url": "",
+        "webdav_username": "",
+        "webdav_password": ""
+    }
+}
