@@ -56,7 +56,7 @@ CAMPUS_STYLE_RULES = """
   3. 结尾是否呼应了本章核心意象？
 
 八、意象系统与沉默留白检查：
-  1. 核心意象（如兔子团子/考研教室/硬座车厢/哈尔滨的雪）是否在本章有延续或变化？
+  1. 核心意象（如考研兔子/考研教室/硬座车厢/哈尔滨的雪）是否在本章有延续或变化？
   2. 意象是否随情节发展产生新的含义层次？（意象应动态变化而非静态重复）
   3. 重要情感场景是否留出了沉默空间？（不急着解释，让读者自己感受）
   4. 留白是否适度？（过少则窒息，过多则断裂）
@@ -75,7 +75,7 @@ CAMPUS_STYLE_RULES = """
 """
 
 CONSISTENCY_PROMPT = """\
-你是一位严谨的校园青春小说审校编辑，需要从两个维度检查最新章节：
+你是一位严谨的现实主义青春小说审校编辑，需要从两个维度检查最新章节：
 A. 剧情一致性（设定/角色/时间线/伏笔）
 B. 风格一致性（分层融合风格体系的遵守情况）
 
@@ -287,9 +287,66 @@ def quick_style_scan(chapter_text: str) -> dict:
     if found_summary:
         issues["结尾说教"] = [f"章节结尾出现总结性金句: {', '.join(found_summary)}，建议用画面定格或意象落点替代"]
 
-    core_images = ["考研自习室", "自习室", "钥匙", "兔子团子", "硬座", "哈尔滨", "广西大学"]
+    core_images = ["考研教室", "考研兔子", "奶黄包", "螺蛳粉", "硬座", "哈尔滨", "张杰", "苏月", "猫南北", "大汪"]
     found_images = [img for img in core_images if img in chapter_text]
     if not found_images:
-        issues["核心意象缺失"] = ["本章未出现任何核心意象（考研自习室/钥匙/兔子团子/硬座/哈尔滨/广西大学），建议至少融入一个"]
+        issues["核心意象缺失"] = ["本章未出现任何核心意象（考研教室/考研兔子/硬座/哈尔滨/奶黄包/螺蛳粉/猫南北/大汪），建议至少融入一个"]
 
     return issues
+
+
+def detect_dazai_blade(chapter_text: str) -> dict:
+    """
+    检测章节中是否使用了太宰治式"刀锋"技法。
+    返回 {"used": bool, "signals": list, "intensity": str}
+    """
+    if not chapter_text:
+        return {"used": False, "signals": [], "intensity": "none"}
+
+    signals = []
+
+    self_hate_phrases = [
+        "恶心", "虚伪", "骗子", "懦弱", "可悲", "不配", "丑陋",
+        "肮脏", "卑鄙", "可笑", "窝囊", "废物", "没用",
+        "我这样的人", "像我这样", "不值得", "没有资格",
+        "装", "演", "假装", "面具", "伪装"
+    ]
+    found_hate = [p for p in self_hate_phrases if p in chapter_text]
+    if found_hate:
+        signals.append(f"自我厌恶/面具: {', '.join(found_hate[:3])}")
+
+    over_aware_phrases = [
+        "过度", "每一个动作", "意识到自己", "审视自己",
+        "从旁观者的角度", "第三者视角", "跳出来看",
+        "可笑的是", "讽刺的是", "荒谬的是",
+        "我清楚地知道", "我明白自己"
+    ]
+    found_aware = [p for p in over_aware_phrases if p in chapter_text]
+    if found_aware:
+        signals.append(f"过度自我意识: {', '.join(found_aware[:3])}")
+
+    blade_moments = [
+        "赤裸", "剥开", "解剖", "撕裂", "暴露",
+        "最真实的想法", "不敢说出口", "心底深处",
+        "阴暗", "黑暗面", "另一面"
+    ]
+    found_blade = [p for p in blade_moments if p in chapter_text]
+    if found_blade:
+        signals.append(f"刀锋时刻: {', '.join(found_blade[:3])}")
+
+    is_used = len(signals) >= 2
+
+    if len(signals) >= 3:
+        intensity = "heavy"
+    elif len(signals) >= 2:
+        intensity = "moderate"
+    elif len(signals) == 1:
+        intensity = "light"
+    else:
+        intensity = "none"
+
+    return {
+        "used": is_used,
+        "signals": signals,
+        "intensity": intensity
+    }

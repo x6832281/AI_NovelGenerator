@@ -422,9 +422,10 @@ def finalize_chapter_ui(self):
                 embedding_model_name=embedding_model_name,
                 interface_format=interface_format,
                 max_tokens=max_tokens,
-                timeout=timeout_val
+                timeout=timeout_val,
+                auto_style_check=True
             )
-            self.safe_log(f"✅ 第{chap_num}章定稿完成（已更新前文摘要、角色状态、向量库）。")
+            self.safe_log(f"✅ 第{chap_num}章定稿完成（已自动风格扫描+修正、更新三级摘要、角色状态、向量库）。")
 
             final_text = read_file(chapter_file)
             self.master.after(0, lambda: self.show_chapter_in_textbox(final_text))
@@ -726,7 +727,8 @@ def generate_batch_ui(self):
             embedding_model_name=embedding_model_name,
             interface_format=finalize_interface_format,
             max_tokens=finalize_max_tokens,
-            timeout=finalize_timeout
+            timeout=finalize_timeout,
+            auto_style_check=True
         )
 
 

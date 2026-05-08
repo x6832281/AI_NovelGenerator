@@ -540,6 +540,12 @@ first_chapter_draft_prompt = """\
 # 8.2 后续章节草稿提示
 next_chapter_draft_prompt = """\
 参考文档：
+└── 全书摘要：
+    {book_summary}
+
+└── 当前部摘要：
+    {part_summary}
+
 └── 前文摘要：
     {global_summary}
 
@@ -581,33 +587,7 @@ next_chapter_draft_prompt = """\
 知识库参考：（按优先级应用）
 {filtered_context}
 
-🎯 知识库应用规则：
-1. 内容分级：
-   - 写作技法类（优先）：
-     ▸ 场景构建模板
-     ▸ 对话写作技巧
-     ▸ 悬念营造手法
-   - 设定资料类（选择性）：
-     ▸ 独特世界观元素
-     ▸ 未使用过的技术细节
-   - 禁忌项类（必须规避）：
-     ▸ 已在前文出现过的特定情节
-     ▸ 重复的人物关系发展
-
-2. 使用限制：
-   ● 禁止直接复制已有章节的情节模式
-   ● 历史章节内容仅允许：
-     → 参照叙事节奏（不超过20%相似度）
-     → 延续必要的人物反应模式（需改编30%以上）
-   ● 第三方写作知识优先用于：
-     → 增强场景表现力（占知识应用的60%以上）
-     → 创新悬念设计（至少1处新技巧）
-
-3. 冲突检测：
-   ⚠️ 若检测到与历史章节重复：
-     - 相似度>40%：必须重构叙事角度
-     - 相似度20-40%：替换至少3个关键要素
-     - 相似度<20%：允许保留核心概念但改变表现形式
+{part_style_emphasis}
 
 依据前面所有设定，开始完成第 {novel_number} 章的正文，字数要求{word_number}字，
 内容生成严格遵循：
@@ -669,3 +649,71 @@ enrich_prompt = """\
 原内容：
 {chapter_text}
 """
+
+# =============== 三级摘要体系（通用版） ===================
+book_summary_prompt = """\
+以下是新完成的章节文本：
+{chapter_text}
+
+当前全书摘要（可为空）：
+{old_book_summary}
+
+小说设定概要：
+{novel_setting}
+
+当前进度：第{novel_number}章 / 共{total_chapters}章
+
+请根据本章新增内容，更新全书摘要（500字以内）。
+要求：保留核心种子、主要角色命运走向、关键转折点、核心意象演变。
+仅返回全书摘要文本，不要任何解释。
+"""
+
+part_summary_prompt = """\
+当前第{part_number}部：{part_name}（第{part_start}~{part_end}章）
+
+新章节文本：
+{chapter_text}
+
+当前第{part_number}部摘要（可为空）：
+{old_part_summary}
+
+请更新第{part_number}部摘要（500字以内）。
+仅返回分部摘要文本，不要任何解释。
+"""
+
+# =============== 风格修正（通用版） ===================
+style_revision_prompt = """\
+以下章节文本存在风格问题，请修正。
+
+原文：
+{chapter_text}
+
+检测到的问题：
+{style_issues}
+
+修正要求：
+1. 替换网络用语为文学表达
+2. 替换陈旧比喻为具体感官描写
+3. 将直白情感宣泄改为行动/沉默/环境描写
+4. 过长句子拆分为短句
+仅返回修正后的完整章节文本，不要任何解释。
+"""
+
+# =============== 伏笔追踪（通用版） ===================
+foreshadow_extract_prompt = """\
+章节文本：
+{chapter_text}
+
+当前伏笔追踪表：
+{current_foreshadows}
+
+请提取本章伏笔信息，返回JSON格式：
+{{"new_foreshadows": [{{"description": "描述", "planted_chapter": {novel_number}, "target_recover_chapter": null, "related_characters": [], "related_items": []}}], "updated_foreshadows": [{{"id": "ID", "status": "mentioned/recovered", "last_mentioned_chapter": {novel_number}, "notes": ""}}]}}
+仅返回JSON，不要解释。
+"""
+
+# =============== 分部风格权重（通用版，空实现） ===================
+PART_STYLE_EMPHASIS = {}
+
+def get_part_style_emphasis(part_number: int) -> str:
+    return ""

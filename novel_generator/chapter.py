@@ -16,6 +16,11 @@ from novel_generator.vectorstore_utils import (
     get_relevant_context_from_vector_store,
     load_vector_store
 )
+from novel_generator.finalization import (
+    get_part_for_chapter, load_part_summaries,
+    get_dazai_blade_status, get_pending_foreshadows,
+    get_total_chapters_from_blueprint as get_total_chapters
+)
 
 
 def estimate_tokens(text: str) -> int:
@@ -370,6 +375,13 @@ def build_chapter_prompt(
     global_summary_text = read_file(global_summary_file)
     character_state_file = os.path.join(filepath, "character_state.txt")
     character_state_text = read_file(character_state_file)
+
+    # 读取三级摘要
+    book_summary_file = os.path.join(filepath, "book_summary.txt")
+    book_summary_text = read_file(book_summary_file)
+    part_info = get_part_for_chapter(filepath, novel_number)
+    part_summaries = load_part_summaries(filepath)
+    part_summary_text = part_summaries.get(str(part_info["part"]), "")
     
     # 获取章节信息
     chapter_info = get_chapter_info_from_blueprint(blueprint_text, novel_number)
@@ -545,17 +557,31 @@ def build_chapter_prompt(
         logging.error(f"知识处理流程异常：{str(e)}")
         filtered_context = "（知识库处理失败）"
 
+    # 构建增强的用户指导（含伏笔提醒和太宰刀锋状态）
+    total_chapters = get_total_chapters(filepath)
+    dazai_status = get_dazai_blade_status(filepath, total_chapters)
+    foreshadow_status = get_pending_foreshadows(filepath, novel_number)
+    enhanced_guidance = user_guidance or ""
+    if dazai_status:
+        enhanced_guidance += f"\n\n[风格技法约束]\n{dazai_status}"
+    if foreshadow_status and "暂无" not in foreshadow_status:
+        enhanced_guidance += f"\n\n[伏笔提醒]\n{foreshadow_status}"
+
     budget = manage_prompt_budget({
         "filtered_context": (filtered_context, 1),
-        "character_state": (character_state_text, 2),
+        "book_summary": (book_summary_text, 2),
+        "part_summary": (part_summary_text, 2),
+        "character_state": (character_state_text, 3),
         "global_summary": (global_summary_text, 3),
         "short_summary": (short_summary, 4),
         "previous_chapter_excerpt": (previous_excerpt, 4),
-        "user_guidance": (user_guidance or "无特殊指导", 6),
+        "user_guidance": (enhanced_guidance or "无特殊指导", 6),
     })
     final_tokens = estimate_tokens(
         prompt_definitions.next_chapter_draft_prompt
         + str(budget.get("filtered_context", ""))
+        + str(budget.get("book_summary", ""))
+        + str(budget.get("part_summary", ""))
         + str(budget.get("character_state", ""))
         + str(budget.get("global_summary", ""))
     )
@@ -563,6 +589,8 @@ def build_chapter_prompt(
 
     return prompt_definitions.next_chapter_draft_prompt.format(
         user_guidance=budget["user_guidance"],
+        book_summary=budget["book_summary"],
+        part_summary=budget["part_summary"],
         global_summary=budget["global_summary"],
         previous_chapter_excerpt=budget["previous_chapter_excerpt"],
         character_state=budget["character_state"],
@@ -588,7 +616,8 @@ def build_chapter_prompt(
         next_chapter_foreshadowing=next_chapter_foreshadow,
         next_chapter_plot_twist_level=next_chapter_twist,
         next_chapter_summary=next_chapter_summary,
-        filtered_context=budget["filtered_context"]
+        filtered_context=budget["filtered_context"],
+        part_style_emphasis=prompt_definitions.get_part_style_emphasis(part_info["part"])
     )
 
 def generate_chapter_draft(
