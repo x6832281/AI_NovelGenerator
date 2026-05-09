@@ -28,18 +28,27 @@ def create_config(config_file: str) -> dict:
     """创建一个创建默认配置文件。"""
     config = {
     "last_interface_format": "OpenAI",
-    "last_embedding_interface_format": "OpenAI",
+    "last_embedding_interface_format": "阿里云百炼",
     "llm_configs": {
         "DeepSeek V4 Pro": {
             "api_key": "",
-            "base_url": "https://api.deepseek.com/v1",
+            "base_url": "https://api.deepseek.com",
             "model_name": "deepseek-v4-pro",
             "temperature": 0.7,
             "max_tokens": 32768,
             "timeout": 600,
             "interface_format": "OpenAI"
         },
-        "Claude Code": {
+        "MiMo V2.5 Pro": {
+            "api_key": "",
+            "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
+            "model_name": "mimo-v2.5-pro",
+            "temperature": 0.7,
+            "max_tokens": 32000,
+            "timeout": 600,
+            "interface_format": "OpenAI"
+        },
+        "Claude Sonnet 4.6": {
             "api_key": "",
             "base_url": "https://clawapi.fulitimes.com",
             "model_name": "claude-sonnet-4-6",
@@ -50,19 +59,13 @@ def create_config(config_file: str) -> dict:
         }
     },
     "embedding_configs": {
-        "OpenAI": {
+        "阿里云百炼": {
             "api_key": "",
-            "base_url": "https://api.openai.com/v1",
-            "model_name": "text-embedding-ada-002",
+            "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "model_name": "text-embedding-v2",
             "retrieval_k": 4,
-            "interface_format": "OpenAI"
-        },
-        "Gemini": {
-            "api_key": "",
-            "base_url": "https://generativelanguage.googleapis.com/v1beta",
-            "model_name": "gemini-embedding-2",
-            "retrieval_k": 4,
-            "interface_format": "Gemini"
+            "interface_format": "阿里云百炼",
+            "consistency_chat_model": "qwen-plus"
         }
     },
     "other_params": {
@@ -81,9 +84,8 @@ def create_config(config_file: str) -> dict:
     "choose_configs": {
         "prompt_draft_llm": "DeepSeek V4 Pro",
         "chapter_outline_llm": "DeepSeek V4 Pro",
-        "architecture_llm": "Claude Code",
-        "final_chapter_llm": "Claude Code",
-        "consistency_review_llm": "DeepSeek V4 Pro"
+        "architecture_llm": "Claude Sonnet 4.6",
+        "final_chapter_llm": "Claude Sonnet 4.6"
     },
     "proxy_setting": {
         "proxy_url": "127.0.0.1",
@@ -97,6 +99,7 @@ def create_config(config_file: str) -> dict:
     }
 }
     save_config(config, config_file)
+    return config
 
 
 

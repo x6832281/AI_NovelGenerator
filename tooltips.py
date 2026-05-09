@@ -21,7 +21,7 @@ tooltips = {
     "embedding_api_key": "调用Embedding模型时所需的API Key。",
     "embedding_interface_format": "Embedding模型接口风格，比如OpenAI或Ollama。",
     "embedding_url": "Embedding模型接口地址。",
-    "embedding_model_name": "Embedding模型名称，如text-embedding-ada-002。",
+    "embedding_model_name": "Embedding模型名称，如text-embedding-v2。",
     "embedding_retrieval_k": "向量检索时返回的Top-K结果数量。",
     "topic": "小说的大致主题或主要故事背景描述。",
     "genre": "小说的题材类型，如玄幻、都市、科幻等。",

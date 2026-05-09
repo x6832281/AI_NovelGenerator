@@ -20,16 +20,14 @@ from novel_generator import (
 )
 from consistency_checker import check_consistency
 
-
 def _resolve_llm_config(self, config_name: str) -> dict:
     cfg = dict(self.loaded_config.get("llm_configs", {}).get(config_name, {}))
-    if not cfg.get("api_key"):
-        ui_name = self.interface_config_var.get()
-        if ui_name == config_name:
-            cfg["api_key"] = self.api_key_var.get().strip()
-            cfg["base_url"] = self.base_url_var.get().strip() or cfg.get("base_url", "")
-            cfg["model_name"] = self.model_name_var.get().strip() or cfg.get("model_name", "")
-            cfg["interface_format"] = self.interface_format_var.get().strip() or cfg.get("interface_format", "OpenAI")
+    return cfg
+
+def _resolve_embedding_config(self) -> dict:
+    """从 loaded_config 读取当前 embedding 配置，api_key 优先从 config 取。"""
+    emb_name = self.embedding_interface_format_var.get().strip()
+    cfg = dict(self.loaded_config.get("embedding_configs", {}).get(emb_name, {}))
     return cfg
 
 def generate_novel_architecture_ui(self):
@@ -176,11 +174,12 @@ def generate_chapter_draft_ui(self):
             scene_loc = self.scene_location_var.get().strip()
             time_constr = self.time_constraint_var.get().strip()
 
-            embedding_api_key = self.embedding_api_key_var.get().strip()
-            embedding_url = self.embedding_url_var.get().strip()
-            embedding_interface_format = self.embedding_interface_format_var.get().strip()
-            embedding_model_name = self.embedding_model_name_var.get().strip()
-            embedding_k = self.safe_get_int(self.embedding_retrieval_k_var, 4)
+            emb_cfg = _resolve_embedding_config(self)
+            embedding_api_key = emb_cfg.get("api_key", "")
+            embedding_url = emb_cfg.get("base_url", self.embedding_url_var.get().strip())
+            embedding_interface_format = emb_cfg.get("interface_format", self.embedding_interface_format_var.get().strip())
+            embedding_model_name = emb_cfg.get("model_name", self.embedding_model_name_var.get().strip())
+            embedding_k = emb_cfg.get("retrieval_k", self.safe_get_int(self.embedding_retrieval_k_var, 4))
 
             self.safe_log(f"生成第{chap_num}章草稿：准备生成请求提示词...")
 
@@ -371,10 +370,11 @@ def finalize_chapter_ui(self):
                 return
 
 
-            embedding_api_key = self.embedding_api_key_var.get().strip()
-            embedding_url = self.embedding_url_var.get().strip()
-            embedding_interface_format = self.embedding_interface_format_var.get().strip()
-            embedding_model_name = self.embedding_model_name_var.get().strip()
+            emb_cfg = _resolve_embedding_config(self)
+            embedding_api_key = emb_cfg.get("api_key", "")
+            embedding_url = emb_cfg.get("base_url", self.embedding_url_var.get().strip())
+            embedding_interface_format = emb_cfg.get("interface_format", self.embedding_interface_format_var.get().strip())
+            embedding_model_name = emb_cfg.get("model_name", self.embedding_model_name_var.get().strip())
 
             chap_num = self.safe_get_int(self.chapter_num_var, 1)
             word_number = self.safe_get_int(self.word_number_var, 3000)
@@ -444,17 +444,17 @@ def do_consistency_check(self):
     def task():
         self.disable_button_safe(self.btn_check_consistency)
         try:
-            cfg = _resolve_llm_config(self, self.consistency_review_llm_var.get())
-            interface_format = cfg["interface_format"]
-            api_key = cfg["api_key"]
-            base_url = cfg["base_url"]
-            model_name = cfg["model_name"]
-            temperature = cfg["temperature"]
-            max_tokens = cfg["max_tokens"]
-            timeout = cfg["timeout"]
+            emb_cfg = _resolve_embedding_config(self)
+            api_key = emb_cfg.get("api_key", "")
+            base_url = emb_cfg.get("base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+            model_name = emb_cfg.get("consistency_chat_model", "qwen-plus")
+            interface_format = "OpenAI"
+            temperature = emb_cfg.get("temperature", 0.3)
+            max_tokens = emb_cfg.get("max_tokens", 4096)
+            timeout = emb_cfg.get("timeout", 600)
 
             if not api_key:
-                messagebox.showerror("错误", f"请先配置 '{self.consistency_review_llm_var.get()}' 的 API Key！")
+                messagebox.showerror("错误", "请先在 config.json 中配置阿里云百炼 embedding 的 API Key！")
                 return
 
 
@@ -595,11 +595,12 @@ def generate_batch_ui(self):
         scene_loc = self.scene_location_var.get().strip()
         time_constr = self.time_constraint_var.get().strip()
 
-        embedding_api_key = self.embedding_api_key_var.get().strip()
-        embedding_url = self.embedding_url_var.get().strip()
-        embedding_interface_format = self.embedding_interface_format_var.get().strip()
-        embedding_model_name = self.embedding_model_name_var.get().strip()
-        embedding_k = self.safe_get_int(self.embedding_retrieval_k_var, 4)
+        emb_cfg = _resolve_embedding_config(self)
+        embedding_api_key = emb_cfg.get("api_key", "")
+        embedding_url = emb_cfg.get("base_url", self.embedding_url_var.get().strip())
+        embedding_interface_format = emb_cfg.get("interface_format", self.embedding_interface_format_var.get().strip())
+        embedding_model_name = emb_cfg.get("model_name", self.embedding_model_name_var.get().strip())
+        embedding_k = emb_cfg.get("retrieval_k", self.safe_get_int(self.embedding_retrieval_k_var, 4))
 
         prompt_text = build_chapter_prompt(
             api_key=draft_api_key,
@@ -749,10 +750,11 @@ def import_knowledge_handler(self):
         def task():
             self.disable_button_safe(self.btn_import_knowledge)
             try:
-                emb_api_key = self.embedding_api_key_var.get().strip()
-                emb_url = self.embedding_url_var.get().strip()
-                emb_format = self.embedding_interface_format_var.get().strip()
-                emb_model = self.embedding_model_name_var.get().strip()
+                emb_cfg = _resolve_embedding_config(self)
+                emb_api_key = emb_cfg.get("api_key", "")
+                emb_url = emb_cfg.get("base_url", self.embedding_url_var.get().strip())
+                emb_format = emb_cfg.get("interface_format", self.embedding_interface_format_var.get().strip())
+                emb_model = emb_cfg.get("model_name", self.embedding_model_name_var.get().strip())
 
                 # 尝试不同编码读取文件
                 content = None

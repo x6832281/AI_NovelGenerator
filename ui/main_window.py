@@ -58,10 +58,10 @@ class NovelGeneratorGUI:
         if self.loaded_config:
             last_llm = next(iter(self.loaded_config["llm_configs"].values())).get("interface_format", "OpenAI")
 
-            last_embedding = self.loaded_config.get("last_embedding_interface_format", "DeepSeek")
+            last_embedding = self.loaded_config.get("last_embedding_interface_format", "阿里云百炼")
         else:
             last_llm = "OpenAI"
-            last_embedding = "DeepSeek"
+            last_embedding = "阿里云百炼"
 
         # if self.loaded_config and "llm_configs" in self.loaded_config and last_llm in self.loaded_config["llm_configs"]:
         #     llm_conf = next(iter(self.loaded_config["llm_configs"]))
@@ -83,8 +83,8 @@ class NovelGeneratorGUI:
         else:
             emb_conf = {
                 "api_key": "",
-                "base_url": "https://api.deepseek.com",
-                "model_name": "deepseek-v4-pro",
+                "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "model_name": "text-embedding-v2",
                 "retrieval_k": 4
             }
 
@@ -102,7 +102,6 @@ class NovelGeneratorGUI:
 
         # -- LLM通用参数 --
         # self.llm_conf_name = next(iter(self.loaded_config["llm_configs"]))
-        self.api_key_var = ctk.StringVar(value=llm_conf.get("api_key", ""))
         self.base_url_var = ctk.StringVar(value=llm_conf.get("base_url", "https://api.openai.com/v1"))
         self.interface_format_var = ctk.StringVar(value=llm_conf.get("interface_format", "OpenAI"))
         self.model_name_var = ctk.StringVar(value=llm_conf.get("model_name", "gpt-4o-mini"))
@@ -115,9 +114,8 @@ class NovelGeneratorGUI:
 
         # -- Embedding相关 --
         self.embedding_interface_format_var = ctk.StringVar(value=last_embedding)
-        self.embedding_api_key_var = ctk.StringVar(value=emb_conf.get("api_key", ""))
-        self.embedding_url_var = ctk.StringVar(value=emb_conf.get("base_url", "https://api.deepseek.com"))
-        self.embedding_model_name_var = ctk.StringVar(value=emb_conf.get("model_name", "deepseek-v4-pro"))
+        self.embedding_url_var = ctk.StringVar(value=emb_conf.get("base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1"))
+        self.embedding_model_name_var = ctk.StringVar(value=emb_conf.get("model_name", "text-embedding-v2"))
         self.embedding_retrieval_k_var = ctk.StringVar(value=str(emb_conf.get("retrieval_k", 4)))
 
 
@@ -125,7 +123,6 @@ class NovelGeneratorGUI:
         self.architecture_llm_var = ctk.StringVar(value=choose_configs.get("architecture_llm", "DeepSeek"))
         self.chapter_outline_llm_var = ctk.StringVar(value=choose_configs.get("chapter_outline_llm", "DeepSeek"))
         self.final_chapter_llm_var = ctk.StringVar(value=choose_configs.get("final_chapter_llm", "DeepSeek"))
-        self.consistency_review_llm_var = ctk.StringVar(value=choose_configs.get("consistency_review_llm", "DeepSeek"))
         self.prompt_draft_llm_var = ctk.StringVar(value=choose_configs.get("prompt_draft_llm", "DeepSeek"))
 
 
@@ -233,13 +230,15 @@ class NovelGeneratorGUI:
         """
         测试当前的LLM配置是否可用
         """
-        interface_format = self.interface_format_var.get().strip()
-        api_key = self.api_key_var.get().strip()
-        base_url = self.base_url_var.get().strip()
-        model_name = self.model_name_var.get().strip()
-        temperature = self.temperature_var.get()
-        max_tokens = self.max_tokens_var.get()
-        timeout = self.timeout_var.get()
+        config_name = self.interface_config_var.get()
+        llm_cfg = self.loaded_config.get("llm_configs", {}).get(config_name, {})
+        interface_format = llm_cfg.get("interface_format", self.interface_format_var.get().strip())
+        api_key = llm_cfg.get("api_key", "")
+        base_url = llm_cfg.get("base_url", self.base_url_var.get().strip())
+        model_name = llm_cfg.get("model_name", self.model_name_var.get().strip())
+        temperature = llm_cfg.get("temperature", self.temperature_var.get())
+        max_tokens = llm_cfg.get("max_tokens", self.max_tokens_var.get())
+        timeout = llm_cfg.get("timeout", self.timeout_var.get())
 
         test_llm_config(
             interface_format=interface_format,
@@ -257,10 +256,12 @@ class NovelGeneratorGUI:
         """
         测试当前的Embedding配置是否可用
         """
-        api_key = self.embedding_api_key_var.get().strip()
-        base_url = self.embedding_url_var.get().strip()
-        interface_format = self.embedding_interface_format_var.get().strip()
-        model_name = self.embedding_model_name_var.get().strip()
+        emb_name = self.embedding_interface_format_var.get().strip()
+        emb_cfg = self.loaded_config.get("embedding_configs", {}).get(emb_name, {})
+        api_key = emb_cfg.get("api_key", "")
+        base_url = emb_cfg.get("base_url", self.embedding_url_var.get().strip())
+        interface_format = emb_cfg.get("interface_format", emb_name)
+        model_name = emb_cfg.get("model_name", self.embedding_model_name_var.get().strip())
 
         test_embedding_config(
             api_key=api_key,
@@ -372,15 +373,17 @@ class NovelGeneratorGUI:
             messagebox.showwarning("警告", "请先设置保存路径")
             return
         
-        # 初始化LLM适配器
+        # 初始化LLM适配器（从 config 读取 api_key）
+        config_name = self.interface_config_var.get()
+        llm_cfg = self.loaded_config.get("llm_configs", {}).get(config_name, {})
         llm_adapter = create_llm_adapter(
-            interface_format=self.interface_format_var.get(),
-            base_url=self.base_url_var.get(),
-            model_name=self.model_name_var.get(),
-            api_key=self.api_key_var.get(),
-            temperature=self.temperature_var.get(),
-            max_tokens=self.max_tokens_var.get(),
-            timeout=self.timeout_var.get()
+            interface_format=llm_cfg.get("interface_format", self.interface_format_var.get()),
+            base_url=llm_cfg.get("base_url", self.base_url_var.get()),
+            model_name=llm_cfg.get("model_name", self.model_name_var.get()),
+            api_key=llm_cfg.get("api_key", ""),
+            temperature=llm_cfg.get("temperature", self.temperature_var.get()),
+            max_tokens=llm_cfg.get("max_tokens", self.max_tokens_var.get()),
+            timeout=llm_cfg.get("timeout", self.timeout_var.get())
         )
         
         # 传递LLM适配器实例到角色库

@@ -76,7 +76,7 @@ def auto_import_knowledge_files(base_dir: str, config: dict) -> bool:
         print("         请在 GUI 中设置项目路径后，手动导入知识库文件")
         return False
 
-    last_emb_fmt = config.get("last_embedding_interface_format", "OpenAI")
+    last_emb_fmt = config.get("last_embedding_interface_format", "阿里云百炼")
     emb_configs = config.get("embedding_configs", {})
     emb_cfg = emb_configs.get(last_emb_fmt, {})
     emb_api_key = emb_cfg.get("api_key", "")
@@ -92,7 +92,7 @@ def auto_import_knowledge_files(base_dir: str, config: dict) -> bool:
         from novel_generator.knowledge import import_knowledge_file
 
         embedding_adapter = create_embedding_adapter(
-            emb_cfg.get("interface_format", "OpenAI"),
+            emb_cfg.get("interface_format", "阿里云百炼"),
             emb_api_key,
             emb_cfg.get("base_url", ""),
             emb_cfg.get("model_name", "")
@@ -170,7 +170,7 @@ def setup_campus_environment():
         print(f"  [Book] 第三层·刀锋：《人间失格》（太宰治）～5%")
         print(f"  [Book] 第四层·标记：年代标记（八月长安）+ 信物（霍达）～5%")
         print(f"  [Book] 第五层·自由：保留5%自由发挥空间")
-        print(f"  [Model] 支持模型：DeepSeek V4 Pro / Claude Code / MiMo V2.5 Pro")
+        print(f"  [Model] 支持模型：DeepSeek V4 Pro / MiMo V2.5 Pro / Claude Sonnet 4.6")
     except Exception as e:
         print(f"  [WARN] 提示词注入警告: {e}")
         print("  将使用默认提示词继续运行...")
@@ -227,7 +227,7 @@ def create_default_campus_config(config_path: str):
     """创建默认的现实主义青春小说配置"""
     default_config = {
         "last_interface_format": "OpenAI",
-        "last_embedding_interface_format": "OpenAI",
+        "last_embedding_interface_format": "阿里云百炼",
         "llm_configs": {
             "DeepSeek V4 Pro": {
                 "api_key": "",
@@ -238,15 +238,6 @@ def create_default_campus_config(config_path: str):
                 "timeout": 600,
                 "interface_format": "OpenAI",
             },
-            "Claude Code": {
-                "api_key": "",
-                "base_url": "https://clawapi.fulitimes.com",
-                "model_name": "claude-sonnet-4-6",
-                "temperature": 0.7,
-                "max_tokens": 8192,
-                "timeout": 600,
-                "interface_format": "Claude",
-            },
             "MiMo V2.5 Pro": {
                 "api_key": "",
                 "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
@@ -256,21 +247,23 @@ def create_default_campus_config(config_path: str):
                 "timeout": 600,
                 "interface_format": "OpenAI",
             },
+            "Claude Sonnet 4.6": {
+                "api_key": "",
+                "base_url": "https://clawapi.fulitimes.com",
+                "model_name": "claude-sonnet-4-6",
+                "temperature": 0.7,
+                "max_tokens": 8192,
+                "timeout": 600,
+                "interface_format": "Claude",
+            },
         },
         "embedding_configs": {
-            "OpenAI": {
+            "阿里云百炼": {
                 "api_key": "",
-                "base_url": "https://api.openai.com/v1",
-                "model_name": "text-embedding-ada-002",
+                "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "model_name": "text-embedding-v2",
                 "retrieval_k": 4,
-                "interface_format": "OpenAI",
-            },
-            "Gemini": {
-                "api_key": "",
-                "base_url": "https://generativelanguage.googleapis.com/v1beta",
-                "model_name": "gemini-embedding-2",
-                "retrieval_k": 4,
-                "interface_format": "Gemini",
+                "interface_format": "阿里云百炼",
             },
         },
         "other_params": {
@@ -289,8 +282,8 @@ def create_default_campus_config(config_path: str):
         "choose_configs": {
             "prompt_draft_llm": "DeepSeek V4 Pro",
             "chapter_outline_llm": "DeepSeek V4 Pro",
-            "architecture_llm": "Claude Code",
-            "final_chapter_llm": "Claude Code",
+            "architecture_llm": "Claude Sonnet 4.6",
+            "final_chapter_llm": "Claude Sonnet 4.6",
             "consistency_review_llm": "DeepSeek V4 Pro",
         },
         "proxy_setting": {
