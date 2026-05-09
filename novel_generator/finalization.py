@@ -23,10 +23,10 @@ logging.basicConfig(
 )
 
 DEFAULT_PART_BOUNDARIES = [
-    {"part": 1, "name": "考研教室·相识与暗恋", "start": 1, "end": 10, "theme": "考研教室的相遇，兔子陪伴的日常，暗恋的萌芽"},
-    {"part": 2, "name": "成都·重逢与表白", "start": 11, "end": 22, "theme": "峨眉山九寨沟之旅，人生中很多第一次，爱情的确认"},
-    {"part": 3, "name": "哈尔滨·异地与消磨", "start": 23, "end": 35, "theme": "60小时硬座，零下28度，甜蜜与争吵，默认分手"},
-    {"part": 4, "name": "余生·回望与释然", "start": 36, "end": 43, "theme": "十五年后的回望，成家立业，遗憾但释然"},
+    {"part": 1, "name": "考研教室·相识与暗恋", "start": 1, "end": 10, "theme": "考研教室的相遇（自始至终只有三人：陈北坐最前面、张杰坐中间、苏月坐后面几排），兔子陪伴的日常（笼子放在最后一排角落，晚上九点后关门放出来跑），暗恋的萌芽"},
+    {"part": 2, "name": "成都·重逢与表白", "start": 11, "end": 20, "theme": "峨眉山九寨沟之旅，人生中很多第一次，爱情的确认"},
+    {"part": 3, "name": "哈尔滨·异地与消磨", "start": 21, "end": 32, "theme": "60小时硬座，零下28度，甜蜜与争吵，默认分手"},
+    {"part": 4, "name": "余生·回望与释然", "start": 33, "end": 40, "theme": "十五年后的回望，成家立业，遗憾但释然"},
 ]
 
 
@@ -213,7 +213,7 @@ def update_dazai_blade_tracker(filepath: str, novel_number: int, chapter_text: s
     return tracker
 
 
-def get_dazai_blade_status(filepath: str, total_chapters: int = 43) -> str:
+def get_dazai_blade_status(filepath: str, total_chapters: int = 40) -> str:
     tracker = load_style_tracker(filepath)
     used = tracker["dazai_blade"]["total_used"]
     max_allowed = max(2, int(total_chapters * 0.07))

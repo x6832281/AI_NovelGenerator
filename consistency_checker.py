@@ -287,10 +287,10 @@ def quick_style_scan(chapter_text: str) -> dict:
     if found_summary:
         issues["结尾说教"] = [f"章节结尾出现总结性金句: {', '.join(found_summary)}，建议用画面定格或意象落点替代"]
 
-    core_images = ["考研教室", "考研兔子", "奶黄包", "螺蛳粉", "硬座", "哈尔滨", "张杰", "苏月", "猫南北", "大汪"]
+    core_images = ["考研教室", "考研兔子", "奶黄包", "螺蛳粉", "硬座", "哈尔滨", "张杰", "苏月", "陈北", "猫南北", "大汪"]
     found_images = [img for img in core_images if img in chapter_text]
     if not found_images:
-        issues["核心意象缺失"] = ["本章未出现任何核心意象（考研教室/考研兔子/硬座/哈尔滨/奶黄包/螺蛳粉/猫南北/大汪），建议至少融入一个"]
+        issues["核心意象缺失"] = ["本章未出现任何核心意象（考研教室/考研兔子/硬座/哈尔滨/奶黄包/螺蛳粉/张杰/苏月/陈北/猫南北/大汪），建议至少融入一个"]
 
     return issues
 

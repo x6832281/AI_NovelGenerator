@@ -384,6 +384,84 @@ class GrokAdapter(BaseLLMAdapter):
             logging.error(f"Grok API 调用失败: {e}")
             return ""
 
+class ClaudeAdapter(BaseLLMAdapter):
+    """
+    适配 Claude Code Connect API (灵眸AI)
+    """
+    def __init__(self, api_key: str, base_url: str, model_name: str, max_tokens: int, temperature: float = 0.7, timeout: Optional[int] = 600):
+        self.base_url = check_base_url(base_url)
+        self.api_key = api_key
+        self.model_name = model_name
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.timeout = timeout
+
+        self._client = OpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key,
+            timeout=self.timeout
+        )
+
+    def invoke(self, prompt: str) -> str:
+        try:
+            response = self._client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are Claude, an AI assistant created by Anthropic."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                timeout=self.timeout
+            )
+            if response and response.choices:
+                return response.choices[0].message.content
+            else:
+                logging.warning("No response from ClaudeAdapter.")
+                return ""
+        except Exception as e:
+            logging.error(f"Claude API 调用失败: {e}")
+            return ""
+
+class MimoAdapter(BaseLLMAdapter):
+    """
+    适配灵眸AI Mimo API
+    """
+    def __init__(self, api_key: str, base_url: str, model_name: str, max_tokens: int, temperature: float = 0.7, timeout: Optional[int] = 600):
+        self.base_url = check_base_url(base_url)
+        self.api_key = api_key
+        self.model_name = model_name
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.timeout = timeout
+
+        self._client = OpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key,
+            timeout=self.timeout
+        )
+
+    def invoke(self, prompt: str) -> str:
+        try:
+            response = self._client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are Mimo, an AI assistant created by LingMo AI."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                timeout=self.timeout
+            )
+            if response and response.choices:
+                return response.choices[0].message.content
+            else:
+                logging.warning("No response from MimoAdapter.")
+                return ""
+        except Exception as e:
+            logging.error(f"灵眸AI API 调用失败: {e}")
+            return ""
+
 def create_llm_adapter(
     interface_format: str,
     base_url: str,
@@ -419,5 +497,9 @@ def create_llm_adapter(
         return SiliconFlowAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
     elif fmt == "grok":
         return GrokAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
+    elif fmt == "claude":
+        return ClaudeAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
+    elif fmt == "mimo":
+        return MimoAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
     else:
         raise ValueError(f"Unknown interface_format: {interface_format}")

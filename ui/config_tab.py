@@ -346,7 +346,7 @@ def build_ai_config_tab(self):
     # 3) 接口格式
     create_label_with_help(self, self.ai_config_tab, "接口格式:", "interface_format", row_start+2, 0)
     self.interface_format_var = ctk.StringVar(value="OpenAI")
-    interface_options = ["OpenAI", "Azure OpenAI", "Ollama", "DeepSeek", "Gemini", "ML Studio"]
+    interface_options = ["OpenAI", "Azure OpenAI", "Ollama", "DeepSeek", "Gemini", "ML Studio", "Claude", "Mimo"]
     interface_dropdown = ctk.CTkOptionMenu(
         self.ai_config_tab,
         values=interface_options,
@@ -500,7 +500,8 @@ def build_embeddings_config_tab(self):
             elif new_value == "Azure OpenAI":
                 self.embedding_url_var.set("https://[az].openai.azure.com/openai/deployments/[model]/embeddings?api-version=2023-05-15")
             elif new_value == "DeepSeek":
-                self.embedding_url_var.set("https://api.deepseek.com/v1")
+                self.embedding_url_var.set("https://api.deepseek.com")
+                self.embedding_model_name_var.set("deepseek-v4-pro")
             elif new_value == "Gemini":
                 self.embedding_url_var.set("https://generativelanguage.googleapis.com/v1beta/")
                 self.embedding_model_name_var.set("models/text-embedding-004")
@@ -522,7 +523,7 @@ def build_embeddings_config_tab(self):
     # 2) Embedding 接口格式
     create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding 接口格式:", tooltip_key="embedding_intexrface_format", row=1, column=0, font=("Microsoft YaHei", 12))
 
-    emb_interface_options = ["DeepSeek", "OpenAI", "Azure OpenAI", "Gemini", "Ollama", "ML Studio","SiliconFlow"]
+    emb_interface_options = ["DeepSeek"]
 
     emb_interface_dropdown = ctk.CTkOptionMenu(self.embeddings_config_tab, values=emb_interface_options, variable=self.embedding_interface_format_var, command=on_embedding_interface_changed, font=("Microsoft YaHei", 12))
     emb_interface_dropdown.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
@@ -718,8 +719,8 @@ def load_config_btn(self):
         if last_embedding in embedding_configs:
             emb_conf = embedding_configs[last_embedding]
             self.embedding_api_key_var.set(emb_conf.get("api_key", ""))
-            self.embedding_url_var.set(emb_conf.get("base_url", "https://api.openai.com/v1"))
-            self.embedding_model_name_var.set(emb_conf.get("model_name", "text-embedding-ada-002"))
+            self.embedding_url_var.set(emb_conf.get("base_url", "https://api.deepseek.com"))
+            self.embedding_model_name_var.set(emb_conf.get("model_name", "deepseek-v4-pro"))
             self.embedding_retrieval_k_var.set(str(emb_conf.get("retrieval_k", 4)))
         other_params = cfg.get("other_params", {})
         self.topic_text.delete("0.0", "end")

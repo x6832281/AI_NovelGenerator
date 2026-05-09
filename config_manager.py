@@ -30,32 +30,23 @@ def create_config(config_file: str) -> dict:
     "last_interface_format": "OpenAI",
     "last_embedding_interface_format": "OpenAI",
     "llm_configs": {
-        "DeepSeek V3": {
+        "DeepSeek V4 Pro": {
             "api_key": "",
             "base_url": "https://api.deepseek.com/v1",
-            "model_name": "deepseek-chat",
+            "model_name": "deepseek-v4-pro",
+            "temperature": 0.7,
+            "max_tokens": 32768,
+            "timeout": 600,
+            "interface_format": "OpenAI"
+        },
+        "Claude Code": {
+            "api_key": "",
+            "base_url": "https://clawapi.fulitimes.com",
+            "model_name": "claude-sonnet-4-6",
             "temperature": 0.7,
             "max_tokens": 8192,
             "timeout": 600,
-            "interface_format": "OpenAI"
-        },
-        "GPT 5": {
-            "api_key": "",
-            "base_url": "https://api.openai.com/v1",
-            "model_name": "gpt-5",
-            "temperature": 0.7,
-            "max_tokens": 32768,
-            "timeout": 600,
-            "interface_format": "OpenAI"
-        },
-        "Gemini 2.5 Flash": {
-            "api_key": "",
-            "base_url": "https://generativelanguage.googleapis.com/v1beta",
-            "model_name": "gemini-2.5-flash",
-            "temperature": 0.7,
-            "max_tokens": 32768,
-            "timeout": 600,
-            "interface_format": "Gemini"
+            "interface_format": "Claude"
         }
     },
     "embedding_configs": {
@@ -88,11 +79,11 @@ def create_config(config_file: str) -> dict:
         "time_constraint": ""
     },
     "choose_configs": {
-        "prompt_draft_llm": "DeepSeek V3",
-        "chapter_outline_llm": "DeepSeek V3",
-        "architecture_llm": "Gemini 2.0 Flash",
-        "final_chapter_llm": "GPT 5",
-        "consistency_review_llm": "DeepSeek V3"
+        "prompt_draft_llm": "DeepSeek V4 Pro",
+        "chapter_outline_llm": "DeepSeek V4 Pro",
+        "architecture_llm": "Claude Code",
+        "final_chapter_llm": "Claude Code",
+        "consistency_review_llm": "DeepSeek V4 Pro"
     },
     "proxy_setting": {
         "proxy_url": "127.0.0.1",

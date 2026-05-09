@@ -58,10 +58,10 @@ class NovelGeneratorGUI:
         if self.loaded_config:
             last_llm = next(iter(self.loaded_config["llm_configs"].values())).get("interface_format", "OpenAI")
 
-            last_embedding = self.loaded_config.get("last_embedding_interface_format", "OpenAI")
+            last_embedding = self.loaded_config.get("last_embedding_interface_format", "DeepSeek")
         else:
             last_llm = "OpenAI"
-            last_embedding = "OpenAI"
+            last_embedding = "DeepSeek"
 
         # if self.loaded_config and "llm_configs" in self.loaded_config and last_llm in self.loaded_config["llm_configs"]:
         #     llm_conf = next(iter(self.loaded_config["llm_configs"]))
@@ -83,8 +83,8 @@ class NovelGeneratorGUI:
         else:
             emb_conf = {
                 "api_key": "",
-                "base_url": "https://api.openai.com/v1",
-                "model_name": "text-embedding-ada-002",
+                "base_url": "https://api.deepseek.com",
+                "model_name": "deepseek-v4-pro",
                 "retrieval_k": 4
             }
 
@@ -116,8 +116,8 @@ class NovelGeneratorGUI:
         # -- Embedding相关 --
         self.embedding_interface_format_var = ctk.StringVar(value=last_embedding)
         self.embedding_api_key_var = ctk.StringVar(value=emb_conf.get("api_key", ""))
-        self.embedding_url_var = ctk.StringVar(value=emb_conf.get("base_url", "https://api.openai.com/v1"))
-        self.embedding_model_name_var = ctk.StringVar(value=emb_conf.get("model_name", "text-embedding-ada-002"))
+        self.embedding_url_var = ctk.StringVar(value=emb_conf.get("base_url", "https://api.deepseek.com"))
+        self.embedding_model_name_var = ctk.StringVar(value=emb_conf.get("model_name", "deepseek-v4-pro"))
         self.embedding_retrieval_k_var = ctk.StringVar(value=str(emb_conf.get("retrieval_k", 4)))
 
 
