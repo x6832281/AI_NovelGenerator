@@ -65,6 +65,7 @@ def build_ai_config_tab(self):
         """当选择不同配置时的回调"""
         if new_value in self.loaded_config.get("llm_configs", {}):
             config = self.loaded_config["llm_configs"][new_value]
+            self.api_key_var.set(config.get("api_key", ""))
             self.base_url_var.set(config.get("base_url", ""))
             self.model_name_var.set(config.get("model_name", ""))
             self.temperature_var.set(float(config.get("temperature", 0.7)))
@@ -146,6 +147,7 @@ def build_ai_config_tab(self):
 
         config = self.loaded_config["llm_configs"][config_name]
         config.update({
+            "api_key": self.api_key_var.get(),
             "base_url": self.base_url_var.get(),
             "model_name": self.model_name_var.get(),
             "temperature": float(self.temperature_var.get()),
@@ -229,7 +231,6 @@ def build_ai_config_tab(self):
     btn_frame.columnconfigure(1, weight=1)
     btn_frame.columnconfigure(2, weight=1)
     btn_frame.columnconfigure(3, weight=1)
-
     add_btn = ctk.CTkButton(
         btn_frame,
         text="➕ 新增",
@@ -270,7 +271,34 @@ def build_ai_config_tab(self):
     )
     save_btn.grid(row=0, column=3, padx=2, pady=2, sticky="ew")
 
-    row_start = 2
+    create_label_with_help(self, self.ai_config_tab, "API Key:", "api_key", 2, 0)
+    self.api_key_var = ctk.StringVar(value="")
+    api_key_entry = ctk.CTkEntry(
+        self.ai_config_tab,
+        textvariable=self.api_key_var,
+        font=("Microsoft YaHei", 12),
+        show="*"
+    )
+    api_key_entry.grid(row=2, column=1, columnspan=2, padx=5, pady=5, sticky="nsew")
+
+    # toggle API key visibility
+    def toggle_api_key_visibility():
+        if api_key_entry.cget("show") == "*":
+            api_key_entry.configure(show="")
+            toggle_btn.configure(text="隐藏")
+        else:
+            api_key_entry.configure(show="*")
+            toggle_btn.configure(text="显示")
+    toggle_btn = ctk.CTkButton(
+        self.ai_config_tab,
+        text="显示",
+        width=40,
+        font=("Microsoft YaHei", 10),
+        command=toggle_api_key_visibility
+    )
+    toggle_btn.grid(row=2, column=1, padx=5, pady=5, sticky="e")
+
+    row_start = 3
 
     create_label_with_help(self, self.ai_config_tab, "Base URL:", "base_url", row_start, 0)
     self.base_url_var = ctk.StringVar(value="")
@@ -283,7 +311,7 @@ def build_ai_config_tab(self):
 
     create_label_with_help(self, self.ai_config_tab, "接口格式:", "interface_format", row_start+1, 0)
     self.interface_format_var = ctk.StringVar(value="OpenAI")
-    interface_options = ["OpenAI", "DeepSeek", "Claude"]
+    interface_options = ["OpenAI", "DeepSeek", "Claude", "智谱"]
     interface_dropdown = ctk.CTkOptionMenu(
         self.ai_config_tab,
         values=interface_options,
@@ -380,6 +408,7 @@ def build_embeddings_config_tab(self):
             save_config(config_data, self.config_file)
         if self.loaded_config and "embedding_configs" in self.loaded_config and new_value in self.loaded_config["embedding_configs"]:
             emb_conf = self.loaded_config["embedding_configs"][new_value]
+            self.embedding_api_key_var.set(emb_conf.get("api_key", ""))
             self.embedding_url_var.set(emb_conf.get("base_url", self.embedding_url_var.get()))
             self.embedding_model_name_var.set(emb_conf.get("model_name", ""))
             self.embedding_retrieval_k_var.set(str(emb_conf.get("retrieval_k", 4)))
@@ -394,27 +423,32 @@ def build_embeddings_config_tab(self):
     self.embeddings_config_tab.grid_columnconfigure(1, weight=1)
     self.embeddings_config_tab.grid_columnconfigure(2, weight=0)
 
-    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding 接口格式:", tooltip_key="embedding_intexrface_format", row=0, column=0, font=("Microsoft YaHei", 12))
+    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding API Key:", tooltip_key="embedding_api_key", row=0, column=0, font=("Microsoft YaHei", 12))
 
-    emb_interface_options = ["阿里云百炼"]
+    emb_api_key_entry = ctk.CTkEntry(self.embeddings_config_tab, textvariable=self.embedding_api_key_var, font=("Microsoft YaHei", 12), show="*")
+    emb_api_key_entry.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+
+    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding 接口格式:", tooltip_key="embedding_interface_format", row=1, column=0, font=("Microsoft YaHei", 12))
+
+    emb_interface_options = ["阿里云百炼", "OpenAI", "DeepSeek"]
 
     emb_interface_dropdown = ctk.CTkOptionMenu(self.embeddings_config_tab, values=emb_interface_options, variable=self.embedding_interface_format_var, command=on_embedding_interface_changed, font=("Microsoft YaHei", 12))
-    emb_interface_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+    emb_interface_dropdown.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
 
-    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding Base URL:", tooltip_key="embedding_url", row=1, column=0, font=("Microsoft YaHei", 12))
+    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding Base URL:", tooltip_key="embedding_url", row=2, column=0, font=("Microsoft YaHei", 12))
     emb_url_entry = ctk.CTkEntry(self.embeddings_config_tab, textvariable=self.embedding_url_var, font=("Microsoft YaHei", 12))
-    emb_url_entry.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
+    emb_url_entry.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
 
-    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding Model Name:", tooltip_key="embedding_model_name", row=2, column=0, font=("Microsoft YaHei", 12))
+    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Embedding Model Name:", tooltip_key="embedding_model_name", row=3, column=0, font=("Microsoft YaHei", 12))
     emb_model_name_entry = ctk.CTkEntry(self.embeddings_config_tab, textvariable=self.embedding_model_name_var, font=("Microsoft YaHei", 12))
-    emb_model_name_entry.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
+    emb_model_name_entry.grid(row=3, column=1, padx=5, pady=5, sticky="nsew")
 
-    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Retrieval Top-K:", tooltip_key="embedding_retrieval_k", row=3, column=0, font=("Microsoft YaHei", 12))
+    create_label_with_help(self, parent=self.embeddings_config_tab, label_text="Retrieval Top-K:", tooltip_key="embedding_retrieval_k", row=4, column=0, font=("Microsoft YaHei", 12))
     emb_retrieval_k_entry = ctk.CTkEntry(self.embeddings_config_tab, textvariable=self.embedding_retrieval_k_var, font=("Microsoft YaHei", 12))
-    emb_retrieval_k_entry.grid(row=3, column=1, padx=5, pady=5, sticky="nsew")
+    emb_retrieval_k_entry.grid(row=4, column=1, padx=5, pady=5, sticky="nsew")
 
     test_btn = ctk.CTkButton(self.embeddings_config_tab, text="测试配置", command=self.test_embedding_config, font=("Microsoft YaHei", 12))
-    test_btn.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+    test_btn.grid(row=5, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
 def build_config_choose_tab(self):
 
@@ -440,16 +474,12 @@ def build_config_choose_tab(self):
     final_chapter_dropdown.grid(row=3, column=1, padx=5, pady=5, sticky="nsew")
 
     create_label_with_help(self, parent=self.config_choose, label_text="一致性审校所用模型", tooltip_key="consistency_review_llm_config", row=4, column=0, font=("Microsoft YaHei", 12))
-    consistency_review_label = ctk.CTkLabel(
-        self.config_choose,
-        text="阿里云百炼 text-embedding-v2",
-        font=("Microsoft YaHei", 12),
-        fg_color="#2B2B2B",
-        corner_radius=6,
-        padx=10,
-        pady=5
-    )
-    consistency_review_label.grid(row=4, column=1, padx=5, pady=5, sticky="nsew")
+    consistency_review_dropdown = ctk.CTkOptionMenu(self.config_choose, values=config_choose_options, variable=self.consistency_review_llm_var, font=("Microsoft YaHei", 12))
+    consistency_review_dropdown.grid(row=4, column=1, padx=5, pady=5, sticky="nsew")
+
+    create_label_with_help(self, parent=self.config_choose, label_text="AI检测所用大模型", tooltip_key="ai_check_llm_config", row=5, column=0, font=("Microsoft YaHei", 12))
+    ai_check_dropdown = ctk.CTkOptionMenu(self.config_choose, values=config_choose_options, variable=self.ai_check_llm_var, font=("Microsoft YaHei", 12))
+    ai_check_dropdown.grid(row=5, column=1, padx=5, pady=5, sticky="nsew")
 
     def save_config_choose():
         config_data_full = load_config(self.config_file)
@@ -461,12 +491,14 @@ def build_config_choose_tab(self):
         config_data_full["choose_configs"]["chapter_outline_llm"] = self.chapter_outline_llm_var.get()
         config_data_full["choose_configs"]["prompt_draft_llm"] = self.prompt_draft_llm_var.get()
         config_data_full["choose_configs"]["final_chapter_llm"] = self.final_chapter_llm_var.get()
+        config_data_full["choose_configs"]["consistency_review_llm"] = self.consistency_review_llm_var.get()
+        config_data_full["choose_configs"]["ai_check_llm"] = self.ai_check_llm_var.get()
         save_config(config_data_full, self.config_file)
         messagebox.showinfo("提示", "配置已保存。")
 
     def refresh_config_dropdowns():
         config_names = list(self.loaded_config.get("llm_configs", {}).keys())
-        for dropdown in [architecture_dropdown, chapter_outline_dropdown, prompt_draft_dropdown, final_chapter_dropdown]:
+        for dropdown in [architecture_dropdown, chapter_outline_dropdown, prompt_draft_dropdown, final_chapter_dropdown, consistency_review_dropdown, ai_check_dropdown]:
             dropdown.configure(values=config_names)
             if config_names and dropdown.cget("variable").get() not in config_names:
                 dropdown.cget("variable").set(config_names[0])
@@ -566,6 +598,7 @@ def load_config_btn(self):
             first_name = list(llm_configs.keys())[0]
             llm_conf = llm_configs[first_name]
             self.interface_config_var.set(first_name)
+            self.api_key_var.set(llm_conf.get("api_key", ""))
             self.base_url_var.set(llm_conf.get("base_url", ""))
             self.model_name_var.set(llm_conf.get("model_name", ""))
             self.temperature_var.set(llm_conf.get("temperature", 0.7))
@@ -581,6 +614,7 @@ def load_config_btn(self):
         embedding_configs = cfg.get("embedding_configs", {})
         if last_embedding in embedding_configs:
             emb_conf = embedding_configs[last_embedding]
+            self.embedding_api_key_var.set(emb_conf.get("api_key", ""))
             self.embedding_url_var.set(emb_conf.get("base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1"))
             self.embedding_model_name_var.set(emb_conf.get("model_name", "text-embedding-v2"))
             self.embedding_retrieval_k_var.set(str(emb_conf.get("retrieval_k", 4)))
@@ -606,6 +640,7 @@ def load_config_btn(self):
 def save_config_btn(self):
     current_embedding_interface = self.embedding_interface_format_var.get().strip()
     embedding_config = {
+        "api_key": self.embedding_api_key_var.get(),
         "base_url": self.embedding_url_var.get(),
         "model_name": self.embedding_model_name_var.get(),
         "retrieval_k": self.safe_get_int(self.embedding_retrieval_k_var, 4),

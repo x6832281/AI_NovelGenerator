@@ -6,7 +6,6 @@
 import os
 import logging
 import traceback
-import nltk
 import numpy as np
 import re
 import ssl
@@ -147,36 +146,36 @@ def split_by_length(text: str, max_length: int = 500):
 def split_text_for_vectorstore(chapter_text: str, max_length: int = 500, similarity_threshold: float = 0.7):
     """
     对新的章节文本进行分段后,再用于存入向量库。
-    使用 embedding 进行文本相似度计算。
+    使用中文标点分句，避免依赖 nltk punkt 数据。
     """
     if not chapter_text.strip():
         return []
-    
-    # nltk.download('punkt', quiet=True)
-    # nltk.download('punkt_tab', quiet=True)
-    sentences = nltk.sent_tokenize(chapter_text)
+
+    import re
+    # 按中英文句末标点分句
+    sentences = re.split(r'(?<=[。！？!?…\n])', chapter_text)
+    sentences = [s.strip() for s in sentences if s.strip()]
     if not sentences:
         return []
-    
-    # 直接按长度分段,不做相似度合并
+
     final_segments = []
     current_segment = []
     current_length = 0
-    
+
     for sentence in sentences:
         sentence_length = len(sentence)
         if current_length + sentence_length > max_length:
             if current_segment:
-                final_segments.append(" ".join(current_segment))
+                final_segments.append("".join(current_segment))
             current_segment = [sentence]
             current_length = sentence_length
         else:
             current_segment.append(sentence)
             current_length += sentence_length
-    
+
     if current_segment:
-        final_segments.append(" ".join(current_segment))
-    
+        final_segments.append("".join(current_segment))
+
     return final_segments
 
 def update_vector_store(embedding_adapter, new_chapter: str, filepath: str):

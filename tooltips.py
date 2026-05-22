@@ -4,10 +4,10 @@
 tooltips = {
     "api_key": "在这里填写你的API Key。如果使用OpenAI官方接口，请在 https://platform.openai.com/account/api-keys 获取。",
     "base_url": "模型的接口地址。若使用OpenAI官方：https://api.openai.com/v1。若使用Ollama本地部署，则类似 http://localhost:11434/v1。调用Gemini模型则无需填写。",
-    "interface_format": "指定LLM接口兼容格式，可选DeepSeek、OpenAI、Ollama、ML Studio、Gemini等。\n\n注意："+
+    "interface_format": "指定LLM接口兼容格式，可选DeepSeek、OpenAI、Claude、智谱等。\n\n注意："+
                         "OpenAI 兼容是指的可以通过该标准请求的任何接口，不是只允许使用api.openai.com接口\n"+
                         "例如Ollama接口格式也兼容OpenAI，可以无需修改直接使用\n"+
-                        "ML Studio接口格式与OpenAI接口格式也一致。",
+                        "智谱（GLM系列）使用OpenAI兼容接口，选择'智谱'格式即可。",
     "model_name": "要使用的模型名称，例如deepseek-reasoner、gpt-4o等。如果是Ollama等，请填写你下载好的本地模型名。",
     "temperature": "生成文本的随机度。数值越大越具有发散性，越小越严谨。",
     "max_tokens": "限制单次生成的最大Token数。范围1~100000，请根据模型上下文及需求填写合适值。\n"+

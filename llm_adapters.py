@@ -31,12 +31,15 @@ class BaseLLMAdapter:
     """
     统一适配器基类
     约定：
-      子类可以通过重写 _build_request 来使用不同的请求格式
-      外部调用 call(prompt) 会经过预处理、重试、日志、后处理等公共逻辑
+      外部调用 invoke(prompt) -> call(user_prompt=prompt)
+      子类可以通过重写 call / call_with_messages 来实现不同请求格式
     """
+    def invoke(self, prompt: str) -> str:
+        return self.call(user_prompt=prompt)
+
     def call(self, user_prompt: str, system_prompt: str = "", stop_sequences=None) -> str:
         raise NotImplementedError
-    
+
     def call_with_messages(self, messages: list, stop_sequences=None) -> str:
         raise NotImplementedError
 
@@ -71,7 +74,7 @@ class DeepSeekAdapter(BaseLLMAdapter):
             return ""
         except Exception as e:
             logging.error(f"DeepSeek API 调用失败: {e}")
-            return ""
+            raise
 
 
 class OpenAIAdapter(BaseLLMAdapter):
@@ -102,7 +105,7 @@ class OpenAIAdapter(BaseLLMAdapter):
             return response.content if response and hasattr(response, 'content') else str(response)
         except Exception as e:
             logging.error(f"OpenAI API 调用失败: {e}")
-            return ""
+            raise
 
 
 class ClaudeAdapter(BaseLLMAdapter):
@@ -137,7 +140,41 @@ class ClaudeAdapter(BaseLLMAdapter):
             return ""
         except Exception as e:
             logging.error(f"Claude API 调用失败: {e}")
+            raise
+
+
+class ZhipuAdapter(BaseLLMAdapter):
+    """智谱AI（GLM系列）适配器，使用OpenAI兼容接口"""
+    def __init__(self, api_key: str, base_url: str, model_name: str, max_tokens: int, temperature: float, timeout: int):
+        self.model_name = model_name
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.timeout = timeout
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
+
+    def call(self, user_prompt: str, system_prompt: str = "", stop_sequences=None) -> str:
+        messages = [
+            {"role": "system", "content": system_prompt if system_prompt else "你是一个AI人工智能助手"},
+            {"role": "user", "content": user_prompt}
+        ]
+        return self.call_with_messages(messages, stop_sequences)
+
+    def call_with_messages(self, messages: list, stop_sequences=None) -> str:
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                stop=stop_sequences,
+                timeout=self.timeout
+            )
+            if response.choices and len(response.choices) > 0:
+                return response.choices[0].message.content or ""
             return ""
+        except Exception as e:
+            logging.error(f"智谱AI API 调用失败: {e}")
+            raise
 
 
 def create_llm_adapter(
@@ -152,6 +189,7 @@ def create_llm_adapter(
     """
     工厂函数：根据 interface_format 返回不同的适配器实例。
     """
+    base_url = check_base_url(base_url)
     fmt = interface_format.strip().lower()
     if fmt == "deepseek":
         return DeepSeekAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
@@ -159,5 +197,7 @@ def create_llm_adapter(
         return OpenAIAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
     elif fmt == "claude":
         return ClaudeAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
+    elif fmt == "智谱":
+        return ZhipuAdapter(api_key, base_url, model_name, max_tokens, temperature, timeout)
     else:
         raise ValueError(f"Unknown interface_format: {interface_format}")

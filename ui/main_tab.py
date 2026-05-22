@@ -31,8 +31,7 @@ def build_left_layout(self):
     self.left_frame.grid_rowconfigure(0, weight=0)
     self.left_frame.grid_rowconfigure(1, weight=2)
     self.left_frame.grid_rowconfigure(2, weight=0)
-    self.left_frame.grid_rowconfigure(3, weight=0)
-    self.left_frame.grid_rowconfigure(4, weight=1)
+    self.left_frame.grid_rowconfigure(3, weight=1)
     self.left_frame.columnconfigure(0, weight=1)
 
     self.chapter_label = ctk.CTkLabel(self.left_frame, text="本章内容（可编辑）  字数：0", font=("Microsoft YaHei", 12))
@@ -100,14 +99,68 @@ def build_left_layout(self):
     self.btn_batch_generate.grid(row=0, column=4, padx=5, pady=2, sticky="ew")
 
 
-    # 日志文本框
-    log_label = ctk.CTkLabel(self.left_frame, text="输出日志 (只读)", font=("Microsoft YaHei", 12))
-    log_label.grid(row=3, column=0, padx=5, pady=(5, 0), sticky="w")
+    # 底部区域：日志 + AI检查 标签页
+    self.bottom_tabview = ctk.CTkTabview(self.left_frame)
+    self.bottom_tabview.grid(row=3, column=0, sticky="nsew", padx=5, pady=(0, 5))
 
-    self.log_text = ctk.CTkTextbox(self.left_frame, wrap="word", font=("Microsoft YaHei", 12))
+    # 输出日志标签页
+    self.log_tab = self.bottom_tabview.add("输出日志")
+    self.log_tab.rowconfigure(0, weight=1)
+    self.log_tab.columnconfigure(0, weight=1)
+
+    self.log_text = ctk.CTkTextbox(self.log_tab, wrap="word", font=("Microsoft YaHei", 12))
     TextWidgetContextMenu(self.log_text)
-    self.log_text.grid(row=4, column=0, sticky="nsew", padx=5, pady=(0, 5))
+    self.log_text.grid(row=0, column=0, sticky="nsew")
     self.log_text.configure(state="disabled")
+
+    # AI检查标签页
+    self.ai_check_tab = self.bottom_tabview.add("AI检查")
+    self.ai_check_tab.rowconfigure(1, weight=1)
+    self.ai_check_tab.columnconfigure(0, weight=1)
+
+    ai_btn_frame = ctk.CTkFrame(self.ai_check_tab)
+    ai_btn_frame.grid(row=0, column=0, sticky="ew", padx=2, pady=2)
+    ai_btn_frame.columnconfigure(0, weight=1)
+
+    self.btn_ai_check = ctk.CTkButton(
+        ai_btn_frame, text="开始AI检查(需LLM)",
+        command=self.do_ai_check,
+        font=("Microsoft YaHei", 12), width=140
+    )
+    self.btn_ai_check.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+    self.btn_segmented_ai_check = ctk.CTkButton(
+        ai_btn_frame, text="分段AI检测(无需LLM)",
+        command=self.do_segmented_ai_check,
+        font=("Microsoft YaHei", 12), width=170
+    )
+    self.btn_segmented_ai_check.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+    self.ai_result_text = ctk.CTkTextbox(self.ai_check_tab, wrap="word", font=("Microsoft YaHei", 12))
+    TextWidgetContextMenu(self.ai_result_text)
+    self.ai_result_text.grid(row=1, column=0, sticky="nsew", padx=2, pady=(0, 2))
+    self.ai_result_text.configure(state="disabled")
+
+    # 基本检查标签页
+    self.basic_check_tab = self.bottom_tabview.add("基本检查")
+    self.basic_check_tab.rowconfigure(1, weight=1)
+    self.basic_check_tab.columnconfigure(0, weight=1)
+
+    basic_btn_frame = ctk.CTkFrame(self.basic_check_tab)
+    basic_btn_frame.grid(row=0, column=0, sticky="ew", padx=2, pady=2)
+    basic_btn_frame.columnconfigure(0, weight=1)
+
+    self.btn_basic_check = ctk.CTkButton(
+        basic_btn_frame, text="开始基本检查",
+        command=self.do_basic_check,
+        font=("Microsoft YaHei", 12), width=120
+    )
+    self.btn_basic_check.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+    self.basic_result_text = ctk.CTkTextbox(self.basic_check_tab, wrap="word", font=("Microsoft YaHei", 12))
+    TextWidgetContextMenu(self.basic_result_text)
+    self.basic_result_text.grid(row=1, column=0, sticky="nsew", padx=2, pady=(0, 2))
+    self.basic_result_text.configure(state="disabled")
 
 def build_right_layout(self):
     """

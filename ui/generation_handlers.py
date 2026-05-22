@@ -22,12 +22,18 @@ from consistency_checker import check_consistency
 
 def _resolve_llm_config(self, config_name: str) -> dict:
     cfg = dict(self.loaded_config.get("llm_configs", {}).get(config_name, {}))
+    ui_key = self.api_key_var.get().strip()
+    if ui_key:
+        cfg["api_key"] = ui_key
     return cfg
 
 def _resolve_embedding_config(self) -> dict:
-    """从 loaded_config 读取当前 embedding 配置，api_key 优先从 config 取。"""
+    """从 loaded_config 读取当前 embedding 配置，api_key 优先从 UI 取。"""
     emb_name = self.embedding_interface_format_var.get().strip()
     cfg = dict(self.loaded_config.get("embedding_configs", {}).get(emb_name, {}))
+    ui_key = self.embedding_api_key_var.get().strip()
+    if ui_key:
+        cfg["api_key"] = ui_key
     return cfg
 
 def generate_novel_architecture_ui(self):
@@ -444,18 +450,17 @@ def do_consistency_check(self):
     def task():
         self.disable_button_safe(self.btn_check_consistency)
         try:
-            emb_cfg = _resolve_embedding_config(self)
-            api_key = emb_cfg.get("api_key", "")
-            base_url = emb_cfg.get("base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1")
-            model_name = emb_cfg.get("consistency_chat_model", "qwen-plus")
-            interface_format = "OpenAI"
-            temperature = emb_cfg.get("temperature", 0.3)
-            max_tokens = emb_cfg.get("max_tokens", 4096)
-            timeout = emb_cfg.get("timeout", 600)
-
+            cfg = _resolve_llm_config(self, self.consistency_review_llm_var.get())
+            api_key = cfg.get("api_key", "")
             if not api_key:
-                messagebox.showerror("错误", "请先在 config.json 中配置阿里云百炼 embedding 的 API Key！")
+                messagebox.showerror("错误", f"请先配置 '{self.consistency_review_llm_var.get()}' 的 API Key！")
                 return
+            base_url = cfg.get("base_url", "")
+            model_name = cfg.get("model_name", "")
+            interface_format = cfg.get("interface_format", "OpenAI")
+            temperature = cfg.get("temperature", 0.3)
+            max_tokens = cfg.get("max_tokens", 4096)
+            timeout = cfg.get("timeout", 600)
 
 
             chap_num = self.safe_get_int(self.chapter_num_var, 1)
@@ -847,3 +852,190 @@ def show_plot_arcs_ui(self):
     text_area.pack(fill="both", expand=True, padx=10, pady=10)
     text_area.insert("0.0", arcs_text)
     text_area.configure(state="disabled")
+
+
+def do_ai_check(self):
+    filepath = self.filepath_var.get().strip()
+    if not filepath:
+        messagebox.showwarning("警告", "请先配置保存文件路径。")
+        return
+
+    def task():
+        self.disable_button_safe(self.btn_ai_check)
+        try:
+            cfg = _resolve_llm_config(self, self.ai_check_llm_var.get())
+            api_key = cfg.get("api_key", "")
+            if not api_key:
+                messagebox.showerror("错误", f"请先配置 '{self.ai_check_llm_var.get()}' 的 API Key！")
+                return
+            base_url = cfg.get("base_url", "")
+            model_name = cfg.get("model_name", "")
+            interface_format = cfg.get("interface_format", "OpenAI")
+            temperature = cfg.get("temperature", 0.3)
+            max_tokens = cfg.get("max_tokens", 4096)
+            timeout = cfg.get("timeout", 600)
+
+            # 获取当前章节文本
+            chapter_text = self.chapter_result.get("0.0", "end-1c").strip()
+            if not chapter_text:
+                # 尝试从文件读取
+                chap_num = self.safe_get_int(self.chapter_num_var, 1)
+                chap_file = os.path.join(filepath, "chapters", f"chapter_{chap_num}.txt")
+                chapter_text = read_file(chap_file)
+
+            if not chapter_text.strip():
+                self.safe_log("⚠️ 当前章节内容为空，无法进行AI检测。")
+                return
+
+            # 读取上一章文本（用于跨章节风格一致性检测）
+            chap_num = self.safe_get_int(self.chapter_num_var, 1)
+            previous_chapter_text = ""
+            if chap_num > 1:
+                prev_chap_file = os.path.join(filepath, "chapters", f"chapter_{chap_num - 1}.txt")
+                previous_chapter_text = read_file(prev_chap_file)
+
+            self.safe_log("开始AI内容检测（多维度+统计分析）...")
+            from ai_detector import detect_ai_ratio, format_detection_result
+
+            result = detect_ai_ratio(
+                chapter_text=chapter_text,
+                api_key=api_key,
+                base_url=base_url,
+                model_name=model_name,
+                interface_format=interface_format,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout,
+                previous_chapter_text=previous_chapter_text
+            )
+
+            formatted = format_detection_result(result)
+
+            # 写入AI检查结果区域
+            def show_result():
+                self.ai_result_text.configure(state="normal")
+                self.ai_result_text.delete("0.0", "end")
+                self.ai_result_text.insert("0.0", formatted)
+                self.ai_result_text.configure(state="disabled")
+                # 切换到AI检查标签页
+                self.bottom_tabview.set("AI检查")
+
+            self.master.after(0, show_result)
+            self.safe_log("AI检测完成。")
+
+        except Exception:
+            self.handle_exception("AI检测出错")
+        finally:
+            self.enable_button_safe(self.btn_ai_check)
+
+    threading.Thread(target=task, daemon=True).start()
+
+
+def do_segmented_ai_check(self):
+    """分段统计AI检测（无需LLM配置）"""
+    filepath = self.filepath_var.get().strip()
+    if not filepath:
+        messagebox.showwarning("警告", "请先配置保存文件路径。")
+        return
+
+    def task():
+        self.disable_button_safe(self.btn_segmented_ai_check)
+        try:
+            chapter_text = self.chapter_result.get("0.0", "end-1c").strip()
+            if not chapter_text:
+                chap_num = self.safe_get_int(self.chapter_num_var, 1)
+                chap_file = os.path.join(filepath, "chapters", f"chapter_{chap_num}.txt")
+                chapter_text = read_file(chap_file)
+
+            if not chapter_text.strip():
+                self.safe_log("⚠️ 当前章节内容为空，无法进行AI检测。")
+                return
+
+            self.safe_log("开始分段AI统计检测（无需LLM）...")
+            from ai_detector import segmented_detection, format_segmented_result
+
+            result = segmented_detection(chapter_text)
+            formatted = format_segmented_result(result)
+
+            def show_result():
+                self.ai_result_text.configure(state="normal")
+                self.ai_result_text.delete("0.0", "end")
+                self.ai_result_text.insert("0.0", formatted)
+                self.ai_result_text.configure(state="disabled")
+                self.bottom_tabview.set("AI检查")
+
+            self.master.after(0, show_result)
+            self.safe_log("分段AI检测完成。")
+
+        except Exception:
+            self.handle_exception("分段AI检测出错")
+        finally:
+            self.enable_button_safe(self.btn_segmented_ai_check)
+
+    threading.Thread(target=task, daemon=True).start()
+
+
+def do_basic_check(self):
+    filepath = self.filepath_var.get().strip()
+    if not filepath:
+        messagebox.showwarning("警告", "请先配置保存文件路径。")
+        return
+
+    def task():
+        self.disable_button_safe(self.btn_basic_check)
+        try:
+            cfg = _resolve_llm_config(self, self.ai_check_llm_var.get())
+            api_key = cfg.get("api_key", "")
+            if not api_key:
+                messagebox.showerror("错误", f"请先配置 '{self.ai_check_llm_var.get()}' 的 API Key！")
+                return
+            base_url = cfg.get("base_url", "")
+            model_name = cfg.get("model_name", "")
+            interface_format = cfg.get("interface_format", "OpenAI")
+            temperature = cfg.get("temperature", 0.3)
+            max_tokens = cfg.get("max_tokens", 4096)
+            timeout = cfg.get("timeout", 600)
+
+            # 获取当前章节文本
+            chapter_text = self.chapter_result.get("0.0", "end-1c").strip()
+            if not chapter_text:
+                chap_num = self.safe_get_int(self.chapter_num_var, 1)
+                chap_file = os.path.join(filepath, "chapters", f"chapter_{chap_num}.txt")
+                chapter_text = read_file(chap_file)
+
+            if not chapter_text.strip():
+                self.safe_log("⚠️ 当前章节内容为空，无法进行基本检查。")
+                return
+
+            self.safe_log("开始基本检查（语法/标点/逻辑）...")
+            from ai_detector import do_basic_check as _basic_check, format_basic_check_result
+
+            result = _basic_check(
+                chapter_text=chapter_text,
+                api_key=api_key,
+                base_url=base_url,
+                model_name=model_name,
+                interface_format=interface_format,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout
+            )
+
+            formatted = format_basic_check_result(result)
+
+            def show_result():
+                self.basic_result_text.configure(state="normal")
+                self.basic_result_text.delete("0.0", "end")
+                self.basic_result_text.insert("0.0", formatted)
+                self.basic_result_text.configure(state="disabled")
+                self.bottom_tabview.set("基本检查")
+
+            self.master.after(0, show_result)
+            self.safe_log("基本检查完成。")
+
+        except Exception:
+            self.handle_exception("基本检查出错")
+        finally:
+            self.enable_button_safe(self.btn_basic_check)
+
+    threading.Thread(target=task, daemon=True).start()

@@ -28,13 +28,22 @@
             "max_tokens": 8192,
             "timeout": 600,
             "interface_format": "Claude"
+        },
+        "GLM 5.1": {
+            "api_key": "<your-zhipu-api-key>",
+            "base_url": "https://open.bigmodel.cn/api/paas/v4",
+            "model_name": "GLM-5.1",
+            "temperature": 0.7,
+            "max_tokens": 8192,
+            "timeout": 600,
+            "interface_format": "智谱"
         }
     },
     "embedding_configs": {
         "阿里云百炼": {
             "api_key": "<your-aliyun-api-key>",
             "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-            "model_name": "text-embedding-v2",
+            "model_name": "text-embedding-v3",
             "retrieval_k": 4,
             "interface_format": "阿里云百炼"
         }
@@ -57,7 +66,8 @@
         "chapter_outline_llm": "DeepSeek V4 Pro",
         "architecture_llm": "Claude Sonnet 4.6",
         "final_chapter_llm": "Claude Sonnet 4.6",
-        "consistency_review_llm": "DeepSeek V4 Pro"
+        "consistency_review_llm": "DeepSeek V4 Pro",
+        "ai_check_llm": "DeepSeek V4 Pro"
     },
     "proxy_setting": {
         "proxy_url": "127.0.0.1",

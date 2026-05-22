@@ -85,7 +85,9 @@ def create_config(config_file: str) -> dict:
         "prompt_draft_llm": "DeepSeek V4 Pro",
         "chapter_outline_llm": "DeepSeek V4 Pro",
         "architecture_llm": "Claude Sonnet 4.6",
-        "final_chapter_llm": "Claude Sonnet 4.6"
+        "final_chapter_llm": "Claude Sonnet 4.6",
+        "consistency_review_llm": "DeepSeek V4 Pro",
+        "ai_check_llm": "DeepSeek V4 Pro"
     },
     "proxy_setting": {
         "proxy_url": "127.0.0.1",

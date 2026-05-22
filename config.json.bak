@@ -3,7 +3,7 @@
     "last_embedding_interface_format": "阿里云百炼",
     "llm_configs": {
         "DeepSeek V4 Pro": {
-            "api_key": "",
+            "api_key": "sk-1d57f84a31db4f4ebcbf7f019fb927fc",
             "base_url": "https://api.deepseek.com/v1",
             "model_name": "deepseek-v4-pro",
             "temperature": 0.7,
@@ -21,20 +21,29 @@
             "interface_format": "OpenAI"
         },
         "Claude Sonnet 4.6": {
-            "api_key": "",
+            "api_key": "sk-95587f2b40c57f0a55ffd831a8fde55e9921d54f2fd4a569cc286cdff074a897",
             "base_url": "https://clawapi.fulitimes.com",
             "model_name": "claude-sonnet-4-6",
             "temperature": 0.7,
             "max_tokens": 8192,
             "timeout": 600,
             "interface_format": "Claude"
+        },
+        "GLM 5.1": {
+            "api_key": "ef422b8876bd446f8329bb014674f430.RbJsOScJmkZPNmk6",
+            "base_url": "https://open.bigmodel.cn/api/paas/v4",
+            "model_name": "GLM-5.1",
+            "temperature": 0.7,
+            "max_tokens": 8192,
+            "timeout": 600,
+            "interface_format": "智谱"
         }
     },
     "embedding_configs": {
         "阿里云百炼": {
-            "api_key": "",
+            "api_key": "sk-1f4a019cde9a4d5881906032a2fe28a8",
             "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-            "model_name": "text-embedding-v2",
+            "model_name": "text-embedding-v3",
             "retrieval_k": 4,
             "interface_format": "阿里云百炼"
         }
@@ -57,7 +66,8 @@
         "chapter_outline_llm": "MiMo V2.5 Pro",
         "architecture_llm": "Claude Sonnet 4.6",
         "final_chapter_llm": "Claude Sonnet 4.6",
-        "consistency_review_llm": "DeepSeek V4 Pro"
+        "consistency_review_llm": "MiMo V2.5 Pro",
+        "ai_check_llm": "DeepSeek V4 Pro"
     },
     "proxy_setting": {
         "proxy_url": "127.0.0.1",

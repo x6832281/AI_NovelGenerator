@@ -24,6 +24,9 @@ from ui.generation_handlers import (
     generate_chapter_draft_ui,
     finalize_chapter_ui,
     do_consistency_check,
+    do_ai_check,
+    do_segmented_ai_check,
+    do_basic_check,
     import_knowledge_handler,
     clear_vectorstore_handler,
     show_plot_arcs_ui,
@@ -102,6 +105,7 @@ class NovelGeneratorGUI:
 
         # -- LLM通用参数 --
         # self.llm_conf_name = next(iter(self.loaded_config["llm_configs"]))
+        self.api_key_var = ctk.StringVar(value=llm_conf.get("api_key", ""))
         self.base_url_var = ctk.StringVar(value=llm_conf.get("base_url", "https://api.openai.com/v1"))
         self.interface_format_var = ctk.StringVar(value=llm_conf.get("interface_format", "OpenAI"))
         self.model_name_var = ctk.StringVar(value=llm_conf.get("model_name", "gpt-4o-mini"))
@@ -113,6 +117,7 @@ class NovelGeneratorGUI:
 
 
         # -- Embedding相关 --
+        self.embedding_api_key_var = ctk.StringVar(value=emb_conf.get("api_key", ""))
         self.embedding_interface_format_var = ctk.StringVar(value=last_embedding)
         self.embedding_url_var = ctk.StringVar(value=emb_conf.get("base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1"))
         self.embedding_model_name_var = ctk.StringVar(value=emb_conf.get("model_name", "text-embedding-v2"))
@@ -124,6 +129,8 @@ class NovelGeneratorGUI:
         self.chapter_outline_llm_var = ctk.StringVar(value=choose_configs.get("chapter_outline_llm", "DeepSeek"))
         self.final_chapter_llm_var = ctk.StringVar(value=choose_configs.get("final_chapter_llm", "DeepSeek"))
         self.prompt_draft_llm_var = ctk.StringVar(value=choose_configs.get("prompt_draft_llm", "DeepSeek"))
+        self.consistency_review_llm_var = ctk.StringVar(value=choose_configs.get("consistency_review_llm", next(iter(self.loaded_config["llm_configs"]))))
+        self.ai_check_llm_var = ctk.StringVar(value=choose_configs.get("ai_check_llm", "DeepSeek V4 Pro"))
 
 
 
@@ -233,7 +240,7 @@ class NovelGeneratorGUI:
         config_name = self.interface_config_var.get()
         llm_cfg = self.loaded_config.get("llm_configs", {}).get(config_name, {})
         interface_format = llm_cfg.get("interface_format", self.interface_format_var.get().strip())
-        api_key = llm_cfg.get("api_key", "")
+        api_key = self.api_key_var.get().strip() or llm_cfg.get("api_key", "")
         base_url = llm_cfg.get("base_url", self.base_url_var.get().strip())
         model_name = llm_cfg.get("model_name", self.model_name_var.get().strip())
         temperature = llm_cfg.get("temperature", self.temperature_var.get())
@@ -258,7 +265,7 @@ class NovelGeneratorGUI:
         """
         emb_name = self.embedding_interface_format_var.get().strip()
         emb_cfg = self.loaded_config.get("embedding_configs", {}).get(emb_name, {})
-        api_key = emb_cfg.get("api_key", "")
+        api_key = self.embedding_api_key_var.get().strip() or emb_cfg.get("api_key", "")
         base_url = emb_cfg.get("base_url", self.embedding_url_var.get().strip())
         interface_format = emb_cfg.get("interface_format", emb_name)
         model_name = emb_cfg.get("model_name", self.embedding_model_name_var.get().strip())
@@ -424,6 +431,9 @@ class NovelGeneratorGUI:
     generate_chapter_draft_ui = generate_chapter_draft_ui
     finalize_chapter_ui = finalize_chapter_ui
     do_consistency_check = do_consistency_check
+    do_ai_check = do_ai_check
+    do_segmented_ai_check = do_segmented_ai_check
+    do_basic_check = do_basic_check
     generate_batch_ui = generate_batch_ui
     import_knowledge_handler = import_knowledge_handler
     clear_vectorstore_handler = clear_vectorstore_handler

@@ -192,6 +192,8 @@ def setup_campus_environment():
         create_default_campus_config(config_campus)
 
     # 备份原有 config.json（如果存在且与校园配置不同）
+    old_llm_keys = {}
+    old_emb_keys = {}
     if os.path.exists(config_default):
         with open(config_default, "r", encoding="utf-8") as f:
             old_config = json.load(f)
@@ -201,9 +203,30 @@ def setup_campus_environment():
             shutil.copy2(config_default, backup_path)
             print(f"\n  [Save] 已备份原配置到: {backup_path}")
 
-    # 用当前配置覆盖默认配置
+        # 保存旧的 API keys，合并到新配置
+        for name, cfg in old_config.get("llm_configs", {}).items():
+            if cfg.get("api_key"):
+                old_llm_keys[name] = cfg["api_key"]
+        for name, cfg in old_config.get("embedding_configs", {}).items():
+            if cfg.get("api_key"):
+                old_emb_keys[name] = cfg["api_key"]
+
+    # 读取校园配置，合并旧的 API keys
+    with open(config_campus, "r", encoding="utf-8") as f:
+        campus_config = json.load(f)
+
+    for name, cfg in campus_config.get("llm_configs", {}).items():
+        if name in old_llm_keys:
+            cfg["api_key"] = old_llm_keys[name]
+    for name, cfg in campus_config.get("embedding_configs", {}).items():
+        if name in old_emb_keys:
+            cfg["api_key"] = old_emb_keys[name]
+
+    with open(config_campus, "w", encoding="utf-8") as f:
+        json.dump(campus_config, f, ensure_ascii=False, indent=4)
+
     shutil.copy2(config_campus, config_default)
-    print(f"  [OK] 已加载现实主义青春文学故事配置")
+    print(f"  [OK] 已加载现实主义青春文学故事配置（API Key 已保留）")
 
     # ── 步骤3.5: 自动导入知识库 ──
     with open(config_campus, "r", encoding="utf-8") as f:
@@ -284,7 +307,7 @@ def create_default_campus_config(config_path: str):
             "chapter_outline_llm": "DeepSeek V4 Pro",
             "architecture_llm": "Claude Sonnet 4.6",
             "final_chapter_llm": "Claude Sonnet 4.6",
-            "consistency_review_llm": "DeepSeek V4 Pro",
+            "consistency_review_llm": "DeepSeek V4 Pro"
         },
         "proxy_setting": {
             "proxy_url": "127.0.0.1",

@@ -52,11 +52,11 @@ def get_part_for_chapter(filepath: str, chapter_number: int) -> dict:
 
 
 def get_total_chapters_from_blueprint(filepath: str) -> int:
-    from chapter_directory_parser import parse_chapter_list
+    from chapter_directory_parser import parse_chapter_blueprint
     directory_file = os.path.join(filepath, "Novel_directory.txt")
     blueprint_text = read_file(directory_file)
     if blueprint_text:
-        chapters = parse_chapter_list(blueprint_text)
+        chapters = parse_chapter_blueprint(blueprint_text)
         if chapters:
             return len(chapters)
     return 43
